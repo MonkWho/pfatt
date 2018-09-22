@@ -95,7 +95,7 @@ If you don't see traffic being bridged between `ngeth0` and `$ONT_IF`, then netg
 If the VLAN0 traffic is being properly handled, next pfSense will need to request an IP. `ngeth0` needs to DHCP using the authorized MAC address. You should see an untagged DCHP request on `ngeth0` carry over to the `$ONT_IF` interface gged as VLAN0. Then you 
 should get a DHCP response and you're in business.
 
-### netgraph
+## netgraph
 
 The netgraph system provides a uniform and modular system for the implementation of kernel objects which perform various networking functions. 
 
@@ -131,10 +131,6 @@ Alternatively, you can also do the EAP / VLAN0 magic at the Linux hypervisor lay
 
 I haven't tried to do this with ESXi. Feel free to submit a PR with notes on your experience.
 
-# OPNSense / FreeBSD
-
-I haven't tried this with OPNSense or native FreeBSD, but I imagine the process is the same with netgraph. Feel free to submit a PR with notes on your experience.
-
 # Other Methods
 
 ## Linux
@@ -146,6 +142,10 @@ If you're looking how to do this on a Linux-based router, please refer to [this 
 There is a whole thread on this at [DSLreports](http://www.dslreports.com/forum/r29903721-AT-T-Residential-Gateway-Bypass-True-bridge-mode). The gist of this method is that you connect your ONT, RG and WAN to a switch. Create two VLANs. Assign the ONT and RG to VLAN1 and the WAN to VLAN2. Let the RG authenticate, then change the ONT VLAN to VLAN2. The WAN the DHCPs and your in business.
 
 However, I don't think this works for everyone. I had to explicity tag my WAN traffic to VLAN0 which wasn't supported on my switch. 
+
+## OPNSense / FreeBSD
+
+I haven't tried this with OPNSense or native FreeBSD, but I imagine the process is the same with netgraph. Feel free to submit a PR with notes on your experience.
 
 # U-verse TV
 
