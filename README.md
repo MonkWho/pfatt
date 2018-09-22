@@ -102,7 +102,7 @@ The netgraph system provides a uniform and modular system for the implementation
 
 Your netgraph should look something like this:
 
-![netgraph](https://github.com/aus/pfatt/master/img/ngctl.png)
+![netgraph](img/ngctl.png)
 
 Try these commands to inspect whether netgraph is configured properly.
 
