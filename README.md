@@ -19,8 +19,7 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
 
 ## Install
 
-1. Logon to your pfSense box via SSH.
-1. Copy the `bin/ng_etf.ko` kernel module to `/boot/kernel` (because it isn't included with pfSense):
+1. Copy the `bin/ng_etf.ko` kernel module to `/boot/kernel` on your pfSense box (because it isn't included):
 
     a) Use the pre-compiled kernel module from me, a random internet stranger:
     ```
@@ -39,10 +38,10 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
     ```
 
 1. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device.
-    ```
-    ONT_IF='em0'
-    RG_IF='em1'
-    RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx'
+    ```shell
+    ONT_IF='em0' # NIC -> ONT
+    RG_IF='em1'  # NIC -> RG
+    RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx' # MAC address of Residential Gateway
     ```
 
 1. Copy `bin/pfatt.sh` to `/usr/local/etc/rc.d` to enable it to run at boot:
