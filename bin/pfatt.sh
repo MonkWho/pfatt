@@ -61,5 +61,9 @@ echo -n "  enabling one2many links... "
 /usr/sbin/ngctl msg o2m: setconfig "{ xmitAlg=2 failAlg=1 enabledLinks=[ 1 1 ] }"
 echo "OK!"
 
+echo -n "  removing waneapfilter:nomatch hook... "
+/usr/sbin/ngctl rmhook waneapfilter: nomatch
+echo "OK!"
+
 echo "ngeth0 should now be available to configure as your pfSense WAN"
 echo "done!"
