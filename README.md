@@ -148,8 +148,8 @@ $ ngctl show ue0:
 ```shell
 /usr/sbin/ngctl shutdown waneapfilter:
 /usr/sbin/ngctl shutdown laneapfilter:
-/usr/sbin/ngctl shutdown $ONT_IF
-/usr/sbin/ngctl shutdown $RG_IF
+/usr/sbin/ngctl shutdown $ONT_IF:
+/usr/sbin/ngctl shutdown $RG_IF:
 /usr/sbin/ngctl shutdown o2m:
 /usr/sbin/ngctl shutdown vlan0:
 /usr/sbin/ngctl shutdown ngeth0:
