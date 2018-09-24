@@ -58,9 +58,8 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
 1. Prepare for console access.
 1. Reboot.
 1. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not change.
-1. Configure the  WAN interface (`ngeth0`) to DHCP
-1. Configure your WAN interface to use the MAC address of your Residential Gateway.
-1. Ensure that `$RG_IF` is added as an interface and enabled.
+1. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
+1. TODO: IPv6
 
 If every thing is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, and tagging the WAN traffic with VLAN0.
 
@@ -92,16 +91,21 @@ tcpdump -ei ngeth0
 
 If you don't see traffic being bridged between `ngeth0` and `$ONT_IF`, then netgraph is not  setup correctly. 
 
-If the VLAN0 traffic is being properly handled, next pfSense will need to request an IP. `ngeth0` needs to DHCP using the authorized MAC address. You should see an untagged DCHP request on `ngeth0` carry over to the `$ONT_IF` interface gged as VLAN0. Then you 
-should get a DHCP response and you're in business.
+If the VLAN0 traffic is being properly handled, next pfSense will need to request an IP. `ngeth0` needs to DHCP using the authorized MAC address. You should see an untagged DCHP request on `ngeth0` carry over to the `$ONT_IF` interface tagged as VLAN0. Then you should get a DHCP response and you're in business.
+
+## Promiscuous Mode
+
+I had to put my `$RG_IF` in promiscuous mode with `/sbin/ifconfig $RG_IF promisc`. Otherwise, the EAP packets would not bridge. I'm not sure if this is due to my USB NIC or a requirement for everyone.
 
 ## netgraph
 
-The netgraph system provides a uniform and modular system for the implementation of kernel objects which perform various networking functions. 
+The netgraph system provides a uniform and modular system for the implementation of kernel objects which perform various networking functions. If you're unfamilar with netgraph, this [tutorial](http://www.netbsd.org/gallery/presentations/ast/2012_AsiaBSDCon/Tutorial_NETGRAPH.pdf) is a great introduction. 
 
 Your netgraph should look something like this:
 
 ![netgraph](img/ngctl.png)
+
+In this setup, the `ue0` interface is my `$RG_IF` and the `bce0` interface is my `$ONT_IF`. You can generate your own graphviz via `ngctl dot`. Copy the output and paste it at [webgraphviz.com](http://www.webgraphviz.com/).
 
 Try these commands to inspect whether netgraph is configured properly.
 
@@ -113,7 +117,47 @@ Try these commands to inspect whether netgraph is configured properly.
     - ng_vlan
     - ng_etf
 
-2. Issue `ngctl list` to list netgraph nodes. Inspect `pfatt.sh` to verify the netgraph output matches the configuration in the script.
+2. Issue `ngctl list` to list netgraph nodes. Inspect `pfatt.sh` to verify the netgraph output matches the configuration in the script. It should look similar to this:
+```
+$ ngctl list
+There are 9 total nodes:
+  Name: o2m             Type: one2many        ID: 000000a0   Num hooks: 3
+  Name: vlan0           Type: vlan            ID: 000000a3   Num hooks: 2
+  Name: ngeth0          Type: eiface          ID: 000000a6   Num hooks: 1
+  Name: <unnamed>       Type: socket          ID: 00000006   Num hooks: 0
+  Name: ngctl28740      Type: socket          ID: 000000ca   Num hooks: 0
+  Name: waneapfilter    Type: etf             ID: 000000aa   Num hooks: 2
+  Name: laneapfilter    Type: etf             ID: 000000ae   Num hooks: 3
+  Name: bce0            Type: ether           ID: 0000006e   Num hooks: 1
+  Name: ue0             Type: ether           ID: 00000016   Num hooks: 2
+```
+3. Inspect the node and hooks. Example for `ue0`:
+```
+$ ngctl show ue0:
+  Name: ue0             Type: ether           ID: 00000016   Num hooks: 2
+  Local hook      Peer name       Peer type    Peer ID         Peer hook
+  ----------      ---------       ---------    -------         ---------
+  upper           laneapfilter    etf          000000ae        nomatch
+  lower           laneapfilter    etf          000000ae        downstream
+```
+
+### Reset netgraph
+
+`pfatt.sh` expects a clean netgraph before it can be ran. To reset a broken netgraph state, try this:
+
+```shell
+/usr/sbin/ngctl shutdown waneapfilter:
+/usr/sbin/ngctl shutdown laneapfilter:
+/usr/sbin/ngctl shutdown $ONT_IF
+/usr/sbin/ngctl shutdown $RG_IF
+/usr/sbin/ngctl shutdown o2m:
+/usr/sbin/ngctl shutdown vlan0:
+/usr/sbin/ngctl shutdown ngeth0:
+```
+
+## pfSense
+
+In some circumstances, pfSense may alter your netgraph. This is especially true if pfSense manages either your `$RG_IF` or `$ONT_IF`. If you make some interface changes and your connection breaks, check to see if your netgraph was changed.
 
 # Virtualization Notes
 
@@ -154,10 +198,9 @@ TODO
 # References
 
 - http://blog.0xpebbles.org/Bypassing-At-t-U-verse-hardware-NAT-table-limits
-- https://forum.pfsense.org/index.php?topic=111043.0
-- http://www.dslreports.com/forum/r31632582-
+- https://forum.netgate.com/topic/99190/att-uverse-rg-bypass-0-2-btc/
+- http://www.dslreports.com/forum/r29903721-AT-T-Residential-Gateway-Bypass-True-bridge-mode
 - http://www.netbsd.org/gallery/presentations/ast/2012_AsiaBSDCon/Tutorial_NETGRAPH.pdf
-
 
 # Credits
 
@@ -165,7 +208,3 @@ This took a lot of testing and a lot of hours to figure out. A unique solution w
 
 - rajl - 1H8CaLNXembfzYGDNq1NykWU3gaKAjm8K5
 - [aus](https://github.com/aus) - 31m9ujhbsRRZs4S64njEkw8ksFSTTDcsRU
-
-
-
-
