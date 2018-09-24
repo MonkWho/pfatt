@@ -37,10 +37,10 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
     ssh root@pfsense chmod 555 /boot/kernel/ng_etf.ko
     ```
 
-1. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device.
+1. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device. In my environment, it's:
     ```shell
-    ONT_IF='em0' # NIC -> ONT
-    RG_IF='em1'  # NIC -> RG
+    ONT_IF='bce0' # NIC -> ONT
+    RG_IF='ue0'  # NIC -> RG
     RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx' # MAC address of Residential Gateway
     ```
 
