@@ -1,0 +1,82 @@
+graph netgraph {
+	edge [ weight = 1.0 ];
+	node [ shape = record, fontsize = 12 ] {
+		"a0" [ label = "{o2m:|{one2many|[a0]:}}" ];
+		"a3" [ label = "{vlan0:|{vlan|[a3]:}}" ];
+		"a6" [ label = "{ngeth0:|{eiface|[a6]:}}" ];
+		"aa" [ label = "{waneapfilter:|{etf|[aa]:}}" ];
+		"ae" [ label = "{laneapfilter:|{etf|[ae]:}}" ];
+		"6e" [ label = "{bce0:|{ether|[6e]:}}" ];
+		"16" [ label = "{ue0:|{ether|[16]:}}" ];
+	};
+	node [ shape = octagon, fontsize = 10 ] {
+		"a0.many1" [ label = "many1" ];
+		"a0.many0" [ label = "many0" ];
+		"a0.one" [ label = "one" ];
+	};
+	{
+		edge [ weight = 2.0, style = bold ];
+		"a0" -- "a0.many1";
+		"a0" -- "a0.many0";
+		"a0" -- "a0.one";
+	};
+	"a0.one" -- "6e.lower";
+	node [ shape = octagon, fontsize = 10 ] {
+		"a3.vlan0" [ label = "vlan0" ];
+		"a3.downstream" [ label = "downstream" ];
+	};
+	{
+		edge [ weight = 2.0, style = bold ];
+		"a3" -- "a3.vlan0";
+		"a3" -- "a3.downstream";
+	};
+	"a3.downstream" -- "a0.many0";
+	node [ shape = octagon, fontsize = 10 ] {
+		"a6.ether" [ label = "ether" ];
+	};
+	{
+		edge [ weight = 2.0, style = bold ];
+		"a6" -- "a6.ether";
+	};
+	"a6.ether" -- "a3.vlan0";
+	node [ shape = octagon, fontsize = 10 ] {
+		"aa.eapout" [ label = "eapout" ];
+		"aa.downstream" [ label = "downstream" ];
+	};
+	{
+		edge [ weight = 2.0, style = bold ];
+		"aa" -- "aa.eapout";
+		"aa" -- "aa.downstream";
+	};
+	"aa.downstream" -- "a0.many1";
+	node [ shape = octagon, fontsize = 10 ] {
+		"ae.eapout" [ label = "eapout" ];
+		"ae.nomatch" [ label = "nomatch" ];
+		"ae.downstream" [ label = "downstream" ];
+	};
+	{
+		edge [ weight = 2.0, style = bold ];
+		"ae" -- "ae.eapout";
+		"ae" -- "ae.nomatch";
+		"ae" -- "ae.downstream";
+	};
+	"ae.eapout" -- "aa.eapout";
+	"ae.nomatch" -- "16.upper";
+	"ae.downstream" -- "16.lower";
+	node [ shape = octagon, fontsize = 10 ] {
+		"6e.lower" [ label = "lower" ];
+	};
+	{
+		edge [ weight = 2.0, style = bold ];
+		"6e" -- "6e.lower";
+	};
+	node [ shape = octagon, fontsize = 10 ] {
+		"16.upper" [ label = "upper" ];
+		"16.lower" [ label = "lower" ];
+	};
+	{
+		edge [ weight = 2.0, style = bold ];
+		"16" -- "16.upper";
+		"16" -- "16.lower";
+	};
+}
