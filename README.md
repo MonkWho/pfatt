@@ -19,8 +19,7 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
 
 ## Install
 
-1. Logon to your pfSense box via SSH.
-1. Copy the `bin/ng_etf.ko` kernel module to `/boot/kernel` (because it isn't included with pfSense):
+1. Copy the `bin/ng_etf.ko` kernel module to `/boot/kernel` on your pfSense box (because it isn't included):
 
     a) Use the pre-compiled kernel module from me, a random internet stranger:
     ```
@@ -39,10 +38,10 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
     ```
 
 1. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device.
-    ```
-    ONT_IF='em0'
-    RG_IF='em1'
-    RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx'
+    ```shell
+    ONT_IF='em0' # NIC -> ONT
+    RG_IF='em1'  # NIC -> RG
+    RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx' # MAC address of Residential Gateway
     ```
 
 1. Copy `bin/pfatt.sh` to `/usr/local/etc/rc.d` to enable it to run at boot:
@@ -96,13 +95,13 @@ If you don't see traffic being bridged between `ngeth0` and `$ONT_IF`, then netg
 If the VLAN0 traffic is being properly handled, next pfSense will need to request an IP. `ngeth0` needs to DHCP using the authorized MAC address. You should see an untagged DCHP request on `ngeth0` carry over to the `$ONT_IF` interface gged as VLAN0. Then you 
 should get a DHCP response and you're in business.
 
-### netgraph
+## netgraph
 
 The netgraph system provides a uniform and modular system for the implementation of kernel objects which perform various networking functions. 
 
 Your netgraph should look something like this:
 
-![netgraph](https://github.com/aus/pfatt/master/img/ngctl.png)
+![netgraph](img/ngctl.png)
 
 Try these commands to inspect whether netgraph is configured properly.
 
@@ -132,10 +131,6 @@ Alternatively, you can also do the EAP / VLAN0 magic at the Linux hypervisor lay
 
 I haven't tried to do this with ESXi. Feel free to submit a PR with notes on your experience.
 
-# OPNSense / FreeBSD
-
-I haven't tried this with OPNSense or native FreeBSD, but I imagine the process is the same with netgraph. Feel free to submit a PR with notes on your experience.
-
 # Other Methods
 
 ## Linux
@@ -147,6 +142,10 @@ If you're looking how to do this on a Linux-based router, please refer to [this 
 There is a whole thread on this at [DSLreports](http://www.dslreports.com/forum/r29903721-AT-T-Residential-Gateway-Bypass-True-bridge-mode). The gist of this method is that you connect your ONT, RG and WAN to a switch. Create two VLANs. Assign the ONT and RG to VLAN1 and the WAN to VLAN2. Let the RG authenticate, then change the ONT VLAN to VLAN2. The WAN the DHCPs and your in business.
 
 However, I don't think this works for everyone. I had to explicity tag my WAN traffic to VLAN0 which wasn't supported on my switch. 
+
+## OPNSense / FreeBSD
+
+I haven't tried this with OPNSense or native FreeBSD, but I imagine the process is the same with netgraph. Feel free to submit a PR with notes on your experience.
 
 # U-verse TV
 
