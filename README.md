@@ -27,7 +27,7 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
     ssh root@pfsense chmod 555 /boot/kernel/ng_etf.ko
     ```
 
-    b) Or you, a responsible sysadmin, can compile the module yourself from a another, trusted FreeBSD 11.1 machine. _You cannot build packages directly on pfSense._
+    b) Or you, a responsible sysadmin, can compile the module yourself from another, trusted FreeBSD 11.1 machine. _You cannot build packages directly on pfSense._
     ```
     fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/11.1-RELEASE/src.txz
     tar -C / -zxvf src.txz
