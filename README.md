@@ -29,6 +29,7 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
 
     b) Or you, a responsible sysadmin, can compile the module yourself from another, trusted FreeBSD machine. _You cannot build packages directly on pfSense._ Your FreeBSD version should match that of your pfSense version. (Example: pfSense 2.4.3 = FreeBSD 11.1)
     ```
+    # from a FreeBSD machine (not pfSense!)
     fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/11.1-RELEASE/src.txz
     tar -C / -zxvf src.txz
     cd /usr/src/sys/modules/netgraph
