@@ -59,11 +59,78 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
 1. Reboot.
 1. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not change.
 1. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
-1. TODO: IPv6
 
-If every thing is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, and tagging the WAN traffic with VLAN0.
+If everything is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, tagging the WAN traffic with VLAN0, and your WAN interface configured with an IPv4 address via DHCP.
 
-# Troubleshoot
+# IPv6 Setup
+
+Once your netgraph setup is in place and working, there aren't any netgraph changes required to the setup to get IPv6 working. These instructions can also be followed with a different bypass method other than the netgraph method. Big thanks to @pyrodex1980's [post](http://www.dslreports.com/forum/r32118263-) on DSLReports for sharing your notes.
+
+This setup assumes you have a fairly recent version of pfSense. I'm using 2.4.3.
+
+**DUID Setup**
+
+1. Go to _System > Advanced > Networking_
+1. Configure **DHCP6 DUID** to _DUID-EN_
+1. Configure **DUID-EN** to _3561_
+1. Configure your **IANA Private Enterprise Number**. This number is unique for each customer and (I believe) based off your Residential Gateway serial number. I grabbed mine off a pcap of the Residential Gateway. Fire up Wireshark and look for the value in _DHCPv6 > Client Identifier > Identifier_. Add the value as colon separated hex values `00:00:00`.
+1. Save
+
+**WAN Setup**
+
+1. Go to _Interfaces > WAN_
+1. Enable **IPv6 Configuration Type** as _DHCP6_
+1. Scroll to _DCHP6 Client Configuration_
+1. Enable _Advanced Configuration_
+1. Enable _Configuration Override_
+1. Enable _Debug_
+1. Enable _Do not wait for a RA_
+1. Configure **Configuration File** to `/cf/conf/att_dhcp6.conf`
+1. Save
+
+**Configuration File**
+
+1. Logon to your pfsense box and add the following file to `/cf/conf/att_dhcp6.conf` changing the WAN / LAN interface names to match your setup:
+```
+# WAN
+interface ngeth0 {
+        send ia-na 1;   # request stateful address
+        send ia-pd 1;   # request prefix delegation - LAN
+        request domain-name-servers;
+};
+id-assoc na 1 { };
+id-assoc pd 1 {
+        prefix ::/60 infinity;
+        # LAN
+        prefix-interface bce1 {
+                sla-id 0;
+                sla-len 4;
+        };
+};
+```
+
+**LAN Setup**
+
+1. Go to _Interfaces > LAN_
+1. Change the **IPv6 Configuration Type** to _Track Interface_
+1. Under Track IPv6 Interface, assign **IPv6 Interface** to your WAN interface.
+1. Configure **IPv6 Prefix ID** to _0_
+1. Save
+
+**DHCPv6 Server & RA**
+
+1. Go to _Services > DHCPv6 Server & RA_
+1. Enable DHCPv6 server on interface LAN
+1. Configure a range of ::1000 to ::2000
+1. Configure a **Prefix Delegation Range** to _64_
+1. Save
+1. Go to the _Router Advertisements_ tab
+1. Configure **Router mode** as _Stateless DHCP_
+1. Save
+
+That's it! Now your clients should be recieving public IPv6 addresses via DHCP6.
+
+# Troubleshooting Netgraph
 
 ## tcpdump
 
