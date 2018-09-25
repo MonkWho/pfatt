@@ -123,6 +123,7 @@ id-assoc pd 1 {
 1. Enable DHCPv6 server on interface LAN
 1. Configure a range of ::1000 to ::2000
 1. Configure a **Prefix Delegation Range** to _64_
+1. Add a few IPv6 DNS servers
 1. Save
 1. Go to the _Router Advertisements_ tab
 1. Configure **Router mode** as _Stateless DHCP_
