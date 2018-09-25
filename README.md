@@ -51,8 +51,8 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
     ```
 
 1. Connect cables:
-    - `$RG_IF` to Residiential Gateway
-    - `$ONT_IF` to ONT
+    - `$RG_IF` to Residiential Gateway on the ONT port (not the LAN ports!)
+    - `$ONT_IF` to ONT (outside)
     - `LAN NIC` to local switch (as normal)
 
 1. Prepare for console access.
