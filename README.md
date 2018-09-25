@@ -24,7 +24,7 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
     a) Use the pre-compiled kernel module from me, a random internet stranger:
     ```
     scp bin/ng_etf.ko root@pfsense:/boot/kernel/
-    chmod 555 /boot/kernel/ng_etf.ko
+    ssh root@pfsense chmod 555 /boot/kernel/ng_etf.ko
     ```
 
     b) Or you, a responsible sysadmin, can compile the module yourself from a trusted FreeBSD 11.1 machine:
