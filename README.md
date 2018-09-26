@@ -219,7 +219,7 @@ If you don't see traffic being bridged between `ngeth0` and `$ONT_IF`, then netg
 
 ## Promiscuous Mode
 
-I had to put my `$RG_IF` in promiscuous mode with `/sbin/ifconfig $RG_IF promisc`. Otherwise, the EAP packets would not bridge. I'm not sure if this is due to my USB NIC or a requirement for everyone.
+`pfatt.sh` will put `$RG_IF` in promiscuous mode via `/sbin/ifconfig $RG_IF promisc`. Otherwise, the EAP packets would not bridge. I think this is necessary for everyone but I'm not sure. Turn it off if it's casuing issues. 
 
 ## netgraph
 
