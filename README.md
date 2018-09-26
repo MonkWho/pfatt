@@ -1,21 +1,71 @@
 # About
 
-This repository includes my notes on enabling a true bridge mode setup with AT&T U-Verse and pfSense. I've tested and confirmed this setup with the ARRIS NVG589 and BGW210-700. There are a few other methods to accomplish this, so be sure to see what easiest for you. True Bridge Mode is also possible in a Linux via ebtables or using hardware with a VLAN swap trick. I did not have a Linux router and the VLAN swap did not seem to work for me.
+This repository includes my notes on enabling a true bridge mode setup with AT&T U-Verse and pfSense. This method utilizes [netgraph](https://www.freebsd.org/cgi/man.cgi?netgraph(4)) which is a graph based kernel networking subsystem of FreeBSD. This low-level solution was required to account for the unique issues surrounding bridging 802.1X traffic and tagging a VLAN with an id of 0. I've tested and confirmed this setup works with AT&T U-Verse Internet on the ARRIS NVG589 and BGW210-700 residential gateways (probably others too). 
 
-While many residential gateways offer something called _IP Passthrough_, it does not provide the same advantages of a true bridge mode. For example, the NAT table is still managed by the gateway, which is limited to a measily 8192 sessions (although it becomes unstable at even 60% capacity).
+There are a few other methods to accomplish true bridge mode, so be sure to see what easiest for you. True Bridge Mode is also possible in a Linux via ebtables or using hardware with a VLAN swap trick. For me, I was not using a Linux-based router and the VLAN swap did not seem to work for me.
 
-This method will allow you to fully utilize your own router and finally solve that pesky NAT table limit.
+While many AT&T residential gateways offer something called _IP Passthrough_, it does not provide the same advantages of a true bridge mode. For example, the NAT table is still managed by the gateway, which is limited to a measily 8192 sessions (although it becomes unstable at even 60% capacity).
 
-# Quick Setup
+The netgraph method will allow you to fully utilize your own router and fully bypass your residential gateway. It survives reboots, re-authentications, IPv6, and new DHCP leases.
+
+# How it Works
+
+Before continuing to the setup, it's important to understand how this method works. This will make configuration and troubleshooting much easier.
+
+## Standard Procedue
+
+First, let's talk about what happens in the standard setup (without any bypass). At a high level, the following process happens when the gateway boots up:
+
+1. All traffic on the ONT is protected with [802.1/X](https://en.wikipedia.org/wiki/IEEE_802.1X). So in order to talk to anything, the Router Gateway must first perform the [authentication procedure](https://en.wikipedia.org/wiki/IEEE_802.1X#Typical_authentication_progression). This process uses a unique ceritificate that is hardcoded on your residential gateway.
+1. Once the authentication completes, you'll be to properly "talk" to the outside. But strangely, all of your traffic will need to be tagged with VLAN id 0 before the IP gateway will respond.  I believe VLAN0 is an obscure Cisco feature of 802.1Q CoS, but I'm not really sure.  
+1. Once traffic is tagged with VLAN0, your residential gateway needs to request a public IPv4 address via DHCP. The MAC address in the DHCP request needs to match that of the MAC address that's assigned to your AT&T account. Other than that, there's nothing special about the DCHPv4 handshake.
+1. After the DHCP lease is issued, the WAN setup is complete. Your LAN traffic is then NAT'd and routed to the outside.
+
+## Bypass Procedure
+
+To bypass the gateway using pfSense, we can emulate the standard procedure. If we connect our Residential Gateway and ONT to our pfSense box, we can brigde the 802.1/X authentication sequence, tag our WAN traffic as VLAN0, and request a public IPv4 via DHCP using a spoofed MAC address.
+
+Unfortunately, there are some challenges with emulating this proccess. First, it's against RFC to bridge 802.1/X traffic and it is not supported. Second, tagging traffic as VLAN0 is not supported through the standard interfaces. 
+
+This is where netgraph comes in. Netgraph allows you to break some rules and build the proper plumbing to make this work. So, our cabling looks like this:
+
+```
+Residential Gateway
+[ONT Port]
+  |
+  |
+[nic0] pfSense [nic1] 
+                 |
+                 |
+               [ONT]
+              Outside
+```
+
+With netgraph, our procedure looks like this (at a high level):
+
+1. The Residential Gateway initates a 802.1/X EAPOL-START.
+1. The packet then is bridged through netgraph to the ONT interface.
+1. If the packet matches an 802.1/X type (which is does), it is passed to the ONT interface. If it does not, the packet is discarded. This prevents our Residential Gateway from initiating DHCP. We want pfSense to handle that.
+1. The ONT should then see and respond to the EAPOL-START, which is passed back through our netgraph back to the residential gateway. At this point, the 802.1/X authentication should be complete.
+1. netgraph has also created an interface for us called `ngeth0`. This interface is connected to `ng_vlan` which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface. 
+1. pfSense can then be configured to use `ngeth0` as the WAN interface.
+1. Next, we spoof the MAC address of the residential gateway and request a DHCP lease on `ngeth0`. The packets get tagged as VLAN0 and exit to the ONT. 
+1. Now the DHCP handshake should complete and we should be on our way!
+
+Hopefully, that now gives you an idea of what we are trying to accomplish. See the comments and commands `bin/pfatt.sh` for details about the netgraph setup.
+
+But enough talk. Now for the fun part!
+
+# Setup
 
 ## Prerequisites
 
-* You need at least __three__ network interfaces on your pfSense server. 
+* At least __three__ physical network interfaces on your pfSense server
 * The MAC address of your Residential Gateway
 * Local or console access to pfSense
 * pfSense 2.4.3 _(confirmed working, other versions should work but YMMV)_
 
-If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](TODO). I've confirmed it works in my setup. It is compatible with FreeBSD 11.1 and I didn't have to install anything to get it working. Also, don't worry about the poor performance of USB NICs. This third NIC will only send/recieve a few packets periodicaly to authenticate your Router Gateway. The rest of your traffic will utilize your other (and much faster) NICs.
+If you only have two NICs, you can buy this cheap USB NIC one [from Amazon](TODO) as your third. I've confirmed it works in my setup. It is compatible with FreeBSD 11.1 and I didn't have to install anything to get it working. Also, don't worry about the poor performance of USB NICs. This third NIC will only send/recieve a few packets periodicaly to authenticate your Router Gateway. The rest of your traffic will utilize your other (and much faster) NICs.
 
 ## Install
 
@@ -38,28 +88,28 @@ If you don't have three NICs, you can buy this cheap USB NIC one [from Amazon](T
     ssh root@pfsense chmod 555 /boot/kernel/ng_etf.ko
     ```
 
-1. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device. In my environment, it's:
+2. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device. In my environment, it's:
     ```shell
     ONT_IF='bce0' # NIC -> ONT / Outside
     RG_IF='ue0'  # NIC -> Residential Gateway's ONT port
     RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx' # MAC address of Residential Gateway
     ```
 
-1. Copy `bin/pfatt.sh` to `/usr/local/etc/rc.d` to enable it to run at boot:
+3. Copy `bin/pfatt.sh` to `/usr/local/etc/rc.d` to enable it to run at boot:
     ```
     scp bin/pfatt.sh root@pfsense:/usr/local/etc/rc.d/
     ssh root@pfsense chmod +x /usr/local/etc/rc.d/pfatt.sh
     ```
 
-1. Connect cables:
+4. Connect cables:
     - `$RG_IF` to Residiential Gateway on the ONT port (not the LAN ports!)
     - `$ONT_IF` to ONT (outside)
     - `LAN NIC` to local switch (as normal)
 
-1. Prepare for console access.
-1. Reboot.
-1. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not change.
-1. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
+5. Prepare for console access.
+6. Reboot.
+7. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not change. pfSense does not need to manage `$RG_IF` or `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
+8. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
 
 If everything is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, tagging the WAN traffic with VLAN0, and your WAN interface configured with an IPv4 address via DHCP.
 
@@ -132,35 +182,40 @@ id-assoc pd 1 {
 
 That's it! Now your clients should be recieving public IPv6 addresses via DHCP6.
 
-# Troubleshooting Netgraph
+# Troubleshooting
 
 ## tcpdump
 
-You should run tcpdumps on the `$ONT_IF` interface and the `$RG_IF` interface:
+Use tcpdump to watch the authentication, vlan and dhcp bypass process (see above). Run tcpdumps on the `$ONT_IF` interface and the `$RG_IF` interface:
 ```
 tcpdump -ei $ONT_IF
 tcpdump -ei $RG_IF
 ```
 
-From the `$RG_IF` interface, you should see some EAPOL starts like this:
+Restart your Residential Gateway. From the `$RG_IF` interface, you should see some EAPOL starts like this:
 ```
 MAC (oui Unknown) > MAC (oui Unknown), ethertype EAPOL (0x888e), length 60: POL start
 ```
 
-These packets come every so often. I think the RG does some backoff / delay if doesn't immediately auth correctly. You can always reboot your RG to initiate the authentication.
+If you don't see these, make sure you're connected to the ONT port.
+
+These packets come every so often. I think the RG does some backoff / delay if doesn't immediately auth correctly. You can always reboot your RG to initiate the authentication again.
 
 If your netgraph is setup correctly, the EAP start packet from the `$RG_IF` will be bridged onto your `$ONT_IF` interface. Then you should see some more EAP packets from the `$ONT_IF` interface and `$RG_IF` interface as they negotiate 802.1/X EAP authentication.
 
-Once that completes, you should start seeing 802.1Q (tagged as vlan0) traffic on your `$ONT_IF ` interface.
-
-Then, you can start another tcpdump on the `vlan0` interface to see if netgraph is bridging over the VLAN0 traffic to `ngeth0`:
+Once that completes, watch `$ONT_IF` and `ngeth0` for DHCP traffic.
 ```
-tcpdump -ei ngeth0
+tcpdump -ei $ONT_IF port 67 or port 68
+tcpdump -ei ngeth0 port 67 or port 68
 ```
 
-If you don't see traffic being bridged between `ngeth0` and `$ONT_IF`, then netgraph is not  setup correctly. 
+Verify you are seeing 802.1Q (tagged as vlan0) traffic on your `$ONT_IF ` interface and untagged traffic on `ngeth0`. 
+
+Verify the DHCP request is firing using the MAC address of your Residential Gateway.
 
 If the VLAN0 traffic is being properly handled, next pfSense will need to request an IP. `ngeth0` needs to DHCP using the authorized MAC address. You should see an untagged DCHP request on `ngeth0` carry over to the `$ONT_IF` interface tagged as VLAN0. Then you should get a DHCP response and you're in business.
+
+If you don't see traffic being bridged between `ngeth0` and `$ONT_IF`, then netgraph is not setup correctly. 
 
 ## Promiscuous Mode
 
@@ -200,7 +255,7 @@ There are 9 total nodes:
   Name: bce0            Type: ether           ID: 0000006e   Num hooks: 1
   Name: ue0             Type: ether           ID: 00000016   Num hooks: 2
 ```
-3. Inspect the node and hooks. Example for `ue0`:
+3. Inspect the various nodes and hooks. Example for `ue0`:
 ```
 $ ngctl show ue0:
   Name: ue0             Type: ether           ID: 00000016   Num hooks: 2
@@ -234,15 +289,13 @@ This setup has been tested on physical servers and virtual machines. Virtualizat
 
 ## QEMU / KVM / Proxmox
 
-Proxmox uses a bridged networking model, and thus utilizes Linux's native bridge capability. Unfortunately due to the two types of traffic we are bridging (EAP/802.1X and VLAN0/802.1Q), I could never get the traffic to forward through the Linux bridge to the virtual interface of my pfSense VM. Instead, I had to utilize PCI passthrough for my `$RG_IF` and `$ONT_IF` NICs. 
+Proxmox uses a bridged networking model, and thus utilizes Linux's native bridge capability. To use this netgraph method, you do a PCI passthrough for the `$RG_IF` and `$ONT_IF` NICs. The bypass procedure should then be the same.
 
-I believe EAP/802.1X just requires setting the `group_fwd_mask`, but I'm not sure how to get the VLAN0/802.1Q traffic to bridge. If you know why, please open an issue!
-
-Alternatively, you can also do the EAP / VLAN0 magic at the Linux hypervisor layer. Apply the Linux method, then bridge the Linux vlan0 interface to your pfSense VM.
+You can also solve the EAP/802.1X and VLAN0/802.1Q problem by setting the `group_fwd_mask` and creating a vlan0 interface to bridge to your VM. See *Other Methods* below. 
 
 ## ESXi
 
-I haven't tried to do this with ESXi. Feel free to submit a PR with notes on your experience.
+I haven't tried to do this with ESXi. Feel free to submit a PR with notes on your experience. PCI passthrough is probably the best approach here though.
 
 # Other Methods
 
@@ -258,7 +311,7 @@ However, I don't think this works for everyone. I had to explicity tag my WAN tr
 
 ## OPNSense / FreeBSD
 
-I haven't tried this with OPNSense or native FreeBSD, but I imagine the process is the same with netgraph. Feel free to submit a PR with notes on your experience.
+I haven't tried this with OPNSense or native FreeBSD, but I imagine the process is utlimately the same with netgraph. Feel free to submit a PR with notes on your experience.
 
 # U-verse TV
 
@@ -269,11 +322,14 @@ TODO
 - http://blog.0xpebbles.org/Bypassing-At-t-U-verse-hardware-NAT-table-limits
 - https://forum.netgate.com/topic/99190/att-uverse-rg-bypass-0-2-btc/
 - http://www.dslreports.com/forum/r29903721-AT-T-Residential-Gateway-Bypass-True-bridge-mode
+- https://www.dslreports.com/forum/r32127305-True-Bridge-mode-on-pfSense-with-netgraph
+- https://www.dslreports.com/forum/r32116977-AT-T-Fiber-RG-Bypass-pfSense-IPv6
 - http://www.netbsd.org/gallery/presentations/ast/2012_AsiaBSDCon/Tutorial_NETGRAPH.pdf
 
 # Credits
 
 This took a lot of testing and a lot of hours to figure out. A unique solution was required for this to work in pfSense. If this helped you out, please buy us a coffee.
 
-- rajl - 1H8CaLNXembfzYGDNq1NykWU3gaKAjm8K5
+- [rajl](https://forum.netgate.com/user/rajl) - for the netgraph idea - 1H8CaLNXembfzYGDNq1NykWU3gaKAjm8K5
+- [pyrodex](https://www.dslreports.com/profile/1717952) - for IPv6 - ?
 - [aus](https://github.com/aus) - 31m9ujhbsRRZs4S64njEkw8ksFSTTDcsRU
