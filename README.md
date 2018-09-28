@@ -95,11 +95,12 @@ If you only have two NICs, you can buy this cheap USB NIC one [from Amazon](TODO
     RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx' # MAC address of Residential Gateway
     ```
 
-3. Copy `bin/pfatt.sh` to `/usr/local/etc/rc.d` to enable it to run at boot:
+3. Copy `bin/pfatt.sh` to `/root/bin` (or any directory):
     ```
     scp bin/pfatt.sh root@pfsense:/usr/local/etc/rc.d/
-    ssh root@pfsense chmod +x /usr/local/etc/rc.d/pfatt.sh
+    ssh root@pfsense chmod +x /root/bin/pfatt.sh
     ```
+    Now edit your `config.xml` to include `<earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd>` above `</system>`
 
 4. Connect cables:
     - `$RG_IF` to Residiential Gateway on the ONT port (not the LAN ports!)
