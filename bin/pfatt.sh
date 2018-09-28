@@ -65,8 +65,21 @@ echo -n "  removing waneapfilter:nomatch hook... "
 /usr/sbin/ngctl rmhook waneapfilter: nomatch
 echo "OK!"
 
+echo "enabling interfaces..."
+echo -n "  $RG_IF ... "
+/sbin/ifconfig $RG_IF up
+echo "OK!"
+
+echo -n "  $ONT_IF ... "
+/sbin/ifconfig $ONT_IF up
+echo "OK!"
+
 echo -n "enabling promiscuous mode on $RG_IF... "
 /sbin/ifconfig $RG_IF promisc
+echo "OK!"
+
+echo -n "enabling promiscuous mode on $ONT_IF... "
+/sbin/ifconfig $ONT_IF promisc
 echo "OK!"
 
 echo "ngeth0 should now be available to configure as your pfSense WAN"
