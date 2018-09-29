@@ -65,7 +65,7 @@ But enough talk. Now for the fun part!
 * Local or console access to pfSense
 * pfSense 2.4.3 _(confirmed working, other versions should work but YMMV)_
 
-If you only have two NICs, you can buy this cheap USB NIC one [from Amazon](TODO) as your third. I've confirmed it works in my setup. It is compatible with FreeBSD 11.1 and I didn't have to install anything to get it working. Also, don't worry about the poor performance of USB NICs. This third NIC will only send/recieve a few packets periodicaly to authenticate your Router Gateway. The rest of your traffic will utilize your other (and much faster) NICs.
+If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](https://amzn.to/2P0yn8k) as your third. It has the Asix AX88772 chipset, which is supported in FreeBSD with the [axe](https://www.freebsd.org/cgi/man.cgi?query=axe&sektion=4) driver. I've confirmed it works in my setup. The driver was already loaded and I didn't have to install or configure anything to get it working. Also, don't worry about the poor performance of USB or 100Mbps NICs. This third NIC will only send/recieve a few packets periodicaly to authenticate your Router Gateway. The rest of your traffic will utilize your other (and much faster) NICs.
 
 ## Install
 
