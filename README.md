@@ -63,7 +63,7 @@ But enough talk. Now for the fun part!
 * At least __three__ physical network interfaces on your pfSense server
 * The MAC address of your Residential Gateway
 * Local or console access to pfSense
-* pfSense 2.4.3 _(confirmed working, other versions should work but YMMV)_
+* pfSense 2.4.4 _(confirmed working in 2.4.3 too, other versions should work but YMMV)_
 
 If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](https://amzn.to/2P0yn8k) as your third. It has the Asix AX88772 chipset, which is supported in FreeBSD with the [axe](https://www.freebsd.org/cgi/man.cgi?query=axe&sektion=4) driver. I've confirmed it works in my setup. The driver was already loaded and I didn't have to install or configure anything to get it working. Also, don't worry about the poor performance of USB or 100Mbps NICs. This third NIC will only send/recieve a few packets periodicaly to authenticate your Router Gateway. The rest of your traffic will utilize your other (and much faster) NICs.
 
@@ -77,10 +77,10 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     ssh root@pfsense chmod 555 /boot/kernel/ng_etf.ko
     ```
 
-    b) Or you, a responsible sysadmin, can compile the module yourself from another, trusted FreeBSD machine. _You cannot build packages directly on pfSense._ Your FreeBSD version should match that of your pfSense version. (Example: pfSense 2.4.3 = FreeBSD 11.1)
+    b) Or you, a responsible sysadmin, can compile the module yourself from another, trusted FreeBSD machine. _You cannot build packages directly on pfSense._ Your FreeBSD version should match that of your pfSense version. (Example: pfSense 2.4.4 = FreeBSD 11.2)
     ```
     # from a FreeBSD machine (not pfSense!)
-    fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/11.1-RELEASE/src.txz
+    fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/11.2-RELEASE/src.txz
     tar -C / -zxvf src.txz
     cd /usr/src/sys/modules/netgraph
     make
@@ -118,7 +118,7 @@ If everything is setup correctly, netgraph should be bridging EAP traffic betwee
 
 Once your netgraph setup is in place and working, there aren't any netgraph changes required to the setup to get IPv6 working. These instructions can also be followed with a different bypass method other than the netgraph method. Big thanks to @pyrodex1980's [post](http://www.dslreports.com/forum/r32118263-) on DSLReports for sharing your notes.
 
-This setup assumes you have a fairly recent version of pfSense. I'm using 2.4.3.
+This setup assumes you have a fairly recent version of pfSense. I'm using 2.4.4.
 
 **DUID Setup**
 
