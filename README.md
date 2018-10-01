@@ -76,6 +76,7 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     scp bin/ng_etf.ko root@pfsense:/boot/kernel/
     ssh root@pfsense chmod 555 /boot/kernel/ng_etf.ko
     ```
+    **NOTE:** The `ng_etf.ko` in this repo was compiled from the FreeBSD 11.1 release source code. It seems to also work fine on FreeBSD 11.2/pfSense 2.4.4 since there have been [minimal changes](https://github.com/freebsd/freebsd/commits/master/sys/netgraph/ng_etf.c).  
 
     b) Or you, a responsible sysadmin, can compile the module yourself from another, trusted FreeBSD machine. _You cannot build packages directly on pfSense._ Your FreeBSD version should match that of your pfSense version. (Example: pfSense 2.4.4 = FreeBSD 11.2)
     ```
