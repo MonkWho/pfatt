@@ -98,7 +98,8 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
 
 3. Copy `bin/pfatt.sh` to `/root/bin` (or any directory):
     ```
-    scp bin/pfatt.sh root@pfsense:/usr/local/etc/rc.d/
+    ssh root@pfsense mkdir /root/bin
+    scp bin/pfatt.sh root@pfsense:/root/bin/
     ssh root@pfsense chmod +x /root/bin/pfatt.sh
     ```
     Now edit your `config.xml` to include `<earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd>` above `</system>`
