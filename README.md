@@ -102,7 +102,15 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     scp bin/pfatt.sh root@pfsense:/root/bin/
     ssh root@pfsense chmod +x /root/bin/pfatt.sh
     ```
-    Now edit your `config.xml` to include `<earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd>` above `</system>`
+    Now edit your `/conf/config.xml` to include `<earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd>` above `</system>`. 
+    
+    **NOTE:** If you have the 5268AC, you'll also need to install `pfatt-5268.sh` due to [issue #5](https://github.com/aus/pfatt/issues/5). The script monitors your connection and disables or enables the EAP bridging as needed. It's a hacky workaround, but it enables you to keep your 5268AC connected, avoid EAP-Logoffs and survive reboots. Perfom these additional steps to install:
+
+    Copy `bin/pfatt-5268AC.sh` to `/usr/local/etc/rc.d/`:
+    ```
+    scp bin/pfatt-5268AC.sh root@pfsense:/usr/local/etc/rc.d/
+    ssh root@pfsense chmod +x /usr/local/etc/rc.d/pfatt-5268AC.sh
+    ```
 
 4. Connect cables:
     - `$RG_IF` to Residiential Gateway on the ONT port (not the LAN ports!)
