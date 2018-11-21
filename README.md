@@ -195,6 +195,10 @@ That's it! Now your clients should be recieving public IPv6 addresses via DHCP6.
 
 # Troubleshooting
 
+## Logging
+
+Output from `pfatt.sh` and `pfatt-5268AC.sh` can be found in `/var/log/pfatt.log`.
+
 ## tcpdump
 
 Use tcpdump to watch the authentication, vlan and dhcp bypass process (see above). Run tcpdumps on the `$ONT_IF` interface and the `$RG_IF` interface:
