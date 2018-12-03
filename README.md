@@ -4,7 +4,7 @@ This repository includes my notes on enabling a true bridge mode setup with AT&T
 
 There are a few other methods to accomplish true bridge mode, so be sure to see what easiest for you. True Bridge Mode is also possible in a Linux via ebtables or using hardware with a VLAN swap trick. For me, I was not using a Linux-based router and the VLAN swap did not seem to work for me.
 
-While many AT&T residential gateways offer something called _IP Passthrough_, it does not provide the same advantages of a true bridge mode. For example, the NAT table is still managed by the gateway, which is limited to a measily 8192 sessions (although it becomes unstable at even 60% capacity).
+While many AT&T residential gateways offer something called _IP Passthrough_, it does not provide the same advantages of a true bridge mode. For example, the NAT table is still managed by the gateway, which is limited to a measly 8192 sessions (although it becomes unstable at even 60% capacity).
 
 The netgraph method will allow you to fully utilize your own router and fully bypass your residential gateway. It survives reboots, re-authentications, IPv6, and new DHCP leases.
 
@@ -12,20 +12,20 @@ The netgraph method will allow you to fully utilize your own router and fully by
 
 Before continuing to the setup, it's important to understand how this method works. This will make configuration and troubleshooting much easier.
 
-## Standard Procedue
+## Standard Procedure
 
 First, let's talk about what happens in the standard setup (without any bypass). At a high level, the following process happens when the gateway boots up:
 
-1. All traffic on the ONT is protected with [802.1/X](https://en.wikipedia.org/wiki/IEEE_802.1X). So in order to talk to anything, the Router Gateway must first perform the [authentication procedure](https://en.wikipedia.org/wiki/IEEE_802.1X#Typical_authentication_progression). This process uses a unique ceritificate that is hardcoded on your residential gateway.
+1. All traffic on the ONT is protected with [802.1/X](https://en.wikipedia.org/wiki/IEEE_802.1X). So in order to talk to anything, the Router Gateway must first perform the [authentication procedure](https://en.wikipedia.org/wiki/IEEE_802.1X#Typical_authentication_progression). This process uses a unique certificate that is hardcoded on your residential gateway.
 1. Once the authentication completes, you'll be to properly "talk" to the outside. But strangely, all of your traffic will need to be tagged with VLAN id 0 before the IP gateway will respond.  I believe VLAN0 is an obscure Cisco feature of 802.1Q CoS, but I'm not really sure.  
 1. Once traffic is tagged with VLAN0, your residential gateway needs to request a public IPv4 address via DHCP. The MAC address in the DHCP request needs to match that of the MAC address that's assigned to your AT&T account. Other than that, there's nothing special about the DCHPv4 handshake.
 1. After the DHCP lease is issued, the WAN setup is complete. Your LAN traffic is then NAT'd and routed to the outside.
 
 ## Bypass Procedure
 
-To bypass the gateway using pfSense, we can emulate the standard procedure. If we connect our Residential Gateway and ONT to our pfSense box, we can brigde the 802.1/X authentication sequence, tag our WAN traffic as VLAN0, and request a public IPv4 via DHCP using a spoofed MAC address.
+To bypass the gateway using pfSense, we can emulate the standard procedure. If we connect our Residential Gateway and ONT to our pfSense box, we can bridge the 802.1/X authentication sequence, tag our WAN traffic as VLAN0, and request a public IPv4 via DHCP using a spoofed MAC address.
 
-Unfortunately, there are some challenges with emulating this proccess. First, it's against RFC to bridge 802.1/X traffic and it is not supported. Second, tagging traffic as VLAN0 is not supported through the standard interfaces. 
+Unfortunately, there are some challenges with emulating this process. First, it's against RFC to bridge 802.1/X traffic and it is not supported. Second, tagging traffic as VLAN0 is not supported through the standard interfaces. 
 
 This is where netgraph comes in. Netgraph allows you to break some rules and build the proper plumbing to make this work. So, our cabling looks like this:
 
@@ -43,7 +43,7 @@ Residential Gateway
 
 With netgraph, our procedure looks like this (at a high level):
 
-1. The Residential Gateway initates a 802.1/X EAPOL-START.
+1. The Residential Gateway initiates a 802.1/X EAPOL-START.
 1. The packet then is bridged through netgraph to the ONT interface.
 1. If the packet matches an 802.1/X type (which is does), it is passed to the ONT interface. If it does not, the packet is discarded. This prevents our Residential Gateway from initiating DHCP. We want pfSense to handle that.
 1. The ONT should then see and respond to the EAPOL-START, which is passed back through our netgraph back to the residential gateway. At this point, the 802.1/X authentication should be complete.
@@ -107,7 +107,7 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     Now edit your `config.xml` to include `<earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd>` above `</system>`
 
 4. Connect cables:
-    - `$RG_IF` to Residiential Gateway on the ONT port (not the LAN ports!)
+    - `$RG_IF` to Residential Gateway on the ONT port (not the LAN ports!)
     - `$ONT_IF` to ONT (outside)
     - `LAN NIC` to local switch (as normal)
 
@@ -146,7 +146,7 @@ This setup assumes you have a fairly recent version of pfSense. I'm using 2.4.4.
 
 **Configuration File**
 
-1. Logon to your pfsense box and add the following file to `/cf/conf/att_dhcp6.conf` changing the WAN / LAN interface names to match your setup:
+1. Logon to your pfSense box and add the following file to `/cf/conf/att_dhcp6.conf` changing the WAN / LAN interface names to match your setup:
 ```
 # WAN
 interface ngeth0 {
@@ -185,7 +185,7 @@ id-assoc pd 1 {
 1. Configure **Router mode** as _Stateless DHCP_
 1. Save
 
-That's it! Now your clients should be recieving public IPv6 addresses via DHCP6.
+That's it! Now your clients should be receiving public IPv6 addresses via DHCP6.
 
 # Troubleshooting
 
@@ -224,11 +224,11 @@ If you don't see traffic being bridged between `ngeth0` and `$ONT_IF`, then netg
 
 ## Promiscuous Mode
 
-`pfatt.sh` will put `$RG_IF` in promiscuous mode via `/sbin/ifconfig $RG_IF promisc`. Otherwise, the EAP packets would not bridge. I think this is necessary for everyone but I'm not sure. Turn it off if it's casuing issues. 
+`pfatt.sh` will put `$RG_IF` in promiscuous mode via `/sbin/ifconfig $RG_IF promisc`. Otherwise, the EAP packets would not bridge. I think this is necessary for everyone but I'm not sure. Turn it off if it's causing issues. 
 
 ## netgraph
 
-The netgraph system provides a uniform and modular system for the implementation of kernel objects which perform various networking functions. If you're unfamilar with netgraph, this [tutorial](http://www.netbsd.org/gallery/presentations/ast/2012_AsiaBSDCon/Tutorial_NETGRAPH.pdf) is a great introduction. 
+The netgraph system provides a uniform and modular system for the implementation of kernel objects which perform various networking functions. If you're unfamiliar with netgraph, this [tutorial](http://www.netbsd.org/gallery/presentations/ast/2012_AsiaBSDCon/Tutorial_NETGRAPH.pdf) is a great introduction. 
 
 Your netgraph should look something like this:
 
@@ -312,11 +312,11 @@ If you're looking how to do this on a Linux-based router, please refer to [this 
 
 There is a whole thread on this at [DSLreports](http://www.dslreports.com/forum/r29903721-AT-T-Residential-Gateway-Bypass-True-bridge-mode). The gist of this method is that you connect your ONT, RG and WAN to a switch. Create two VLANs. Assign the ONT and RG to VLAN1 and the WAN to VLAN2. Let the RG authenticate, then change the ONT VLAN to VLAN2. The WAN the DHCPs and your in business.
 
-However, I don't think this works for everyone. I had to explicity tag my WAN traffic to VLAN0 which wasn't supported on my switch. 
+However, I don't think this works for everyone. I had to explicitly tag my WAN traffic to VLAN0 which wasn't supported on my switch. 
 
 ## OPNSense / FreeBSD
 
-I haven't tried this with OPNSense or native FreeBSD, but I imagine the process is utlimately the same with netgraph. Feel free to submit a PR with notes on your experience.
+I haven't tried this with OPNSense or native FreeBSD, but I imagine the process is ultimately the same with netgraph. Feel free to submit a PR with notes on your experience.
 
 # U-verse TV
 
