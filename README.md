@@ -69,7 +69,7 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
 
 ## Install
 
-1. Copy the `bin/ng_etf.ko` kernel module to `/boot/kernel` on your pfSense box (because it isn't included):
+1. Copy the `bin/ng_etf.ko` amd64 kernel module to `/boot/kernel` on your pfSense box (because it isn't included):
 
     a) Use the pre-compiled kernel module from me, a random internet stranger:
     ```
@@ -88,6 +88,8 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     scp etf/ng_etf.ko root@pfsense:/boot/kernel/
     ssh root@pfsense chmod 555 /boot/kernel/ng_etf.ko
     ```
+
+    **NOTE:** You'll need to tweak your compiler parameters if you need to build for another architecture, like ARM.
 
 2. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device. In my environment, it's:
     ```shell
