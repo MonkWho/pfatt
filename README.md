@@ -104,7 +104,7 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     ```
     Now edit your `/conf/config.xml` to include `<earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd>` above `</system>`. 
     
-    **NOTE:** If you have the 5268AC, you'll also need to install `pfatt-5268.sh` due to [issue #5](https://github.com/aus/pfatt/issues/5). The script monitors your connection and disables or enables the EAP bridging as needed. It's a hacky workaround, but it enables you to keep your 5268AC connected, avoid EAP-Logoffs and survive reboots. Perfom these additional steps to install:
+    **NOTE:** If you have the 5268AC, you'll also need to install `pfatt-5268.sh` due to [issue #5](https://github.com/aus/pfatt/issues/5). The script monitors your connection and disables or enables the EAP bridging as needed. It's a hacky workaround, but it enables you to keep your 5268AC connected, avoid EAP-Logoffs and survive reboots. Consider changing the `PING_HOST` in `pfatt-5268AC.sh` to a reliable host. Then perform these additional steps to install:
 
     Copy `bin/pfatt-5268AC.sh` to `/usr/local/etc/rc.d/`:
     ```
