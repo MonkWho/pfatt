@@ -140,7 +140,7 @@ This setup assumes you have a fairly recent version of pfSense. I'm using 2.4.4.
 1. Go to _System > Advanced > Networking_
 1. Configure **DHCP6 DUID** to _DUID-EN_
 1. Configure **DUID-EN** to _3561_
-1. Configure your **IANA Private Enterprise Number**. This number is unique for each customer and (I believe) based off your Residential Gateway serial number. I grabbed mine off a pcap of the Residential Gateway. Fire up Wireshark and look for the value in _DHCPv6 > Client Identifier > Identifier_. Add the value as colon separated hex values `00:00:00`.
+1. Configure your **IANA Private Enterprise Number**. This number is unique for each customer and (I believe) based off your Residential Gateway serial number. You can generate your DUID using [gen-duid.sh](https://github.com/aus/pfatt/blob/master/bin/gen-duid.sh), which just takes a few inputs. Or, you can take a pcap of the Residential Gateway with some DHCPv6 traffic. Then fire up Wireshark and look for the value in _DHCPv6 > Client Identifier > Identifier_. Add the value as colon separated hex values `00:00:00`.
 1. Save
 
 **WAN Setup**
