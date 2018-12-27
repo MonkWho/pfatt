@@ -71,12 +71,11 @@ getTimestamp(){
     /usr/sbin/ngctl rmhook waneapfilter: nomatch
     echo "OK!"
 
-    echo "$(getTimestamp) enabling interfaces..."
-    echo -n "$(getTimestamp)   $RG_IF ... "
+    echo -n "$(getTimestamp) enabling $RG_IF interface... "
     /sbin/ifconfig $RG_IF up
     echo "OK!"
 
-    echo -n "$(getTimestamp)   $ONT_IF ... "
+    echo -n "$(getTimestamp) enabling $ONT_IF interface... "
     /sbin/ifconfig $ONT_IF up
     echo "OK!"
 
