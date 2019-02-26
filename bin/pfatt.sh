@@ -125,16 +125,16 @@ if [ "$EAP_MODE" = "bridge" ] ; then
 
   if [ "$EAP_BRIDGE_5268AC" = "1" ] ; then
     # install proper rc script
-    /bin/cp /conf/pfatt/bin/pfatt-5268AC.rc /usr/local/etc/rc.d/pfatt-5268AC
+    /bin/cp /conf/pfatt/bin/pfatt-5268AC.rc /usr/local/etc/rc.d/pfatt-5268AC.sh
     # kill any existing pfatt-5268AC process
     PID=$(pgrep -f "pfatt-5268AC")
     if [ ${PID} > 0 ]; then
       /usr/bin/logger -st "pfatt" "terminating existing pfatt-5268AC on PID ${PID}..."
       RES=$(kill ${PID})
-      /usr/local/etc/rc.d/pfatt-5268AC stop
+      /usr/local/etc/rc.d/pfatt-5268AC.sh stop
     fi
     /usr/bin/logger -st "pfatt" "enabling 5268AC workaround..."
-    /usr/local/etc/rc.d/pfatt-5268AC start
+    /usr/local/etc/rc.d/pfatt-5268AC.sh start
   fi
   /usr/bin/logger -st "pfatt" "ngeth0 should now be available to configure as your WAN..."
   /usr/bin/logger -st "pfatt" "done!"
