@@ -1,6 +1,6 @@
 #!/bin/sh
 
-script_path="/root/bin/pfatt-5268AC.sh"
+script_path="/cf/conf/pfatt/bin/pfatt-5268AC.sh"
 
 name=`/usr/bin/basename "${script_path}"`
 
@@ -10,14 +10,14 @@ rc_start() {
 
     ${script_path} &
     pid=$!
-    
+
     if [ $pid ]; then
         echo $pid > /var/run/${name}.pid
-        /usr/bin/logger -p daemon.info -i -t pfattStartup "Successfully started ${name}"
+        /usr/bin/logger -p daemon.info -i -t pfatt-5268AC "successfully started ${name}"
     else
-        /usr/bin/logger -p daemon.error -i -t pfattStartup "Error starting ${name}"
+        /usr/bin/logger -p daemon.error -i -t pfatt-5268AC "error starting ${name}"
     fi
-    
+
     ### Remove the lock
     if [ -f /var/run/${name}.lck ]; then
         /bin/sleep 2
