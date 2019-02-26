@@ -112,9 +112,9 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     
     Copy `bin/pfatt-5268AC.sh` to `/root/bin/`:
     ```
-    scp bin/pfatt-5268AC root@pfsense:/usr/local/etc/rc.d/
+    scp bin/pfatt-5268AC root@pfsense:/usr/local/etc/rc.d/pfatt-5268AC.sh
     scp bin/pfatt-5268AC.sh root@pfsense:/root/bin/
-    ssh root@pfsense chmod +x /usr/local/etc/rc.d/pfatt-5268AC /root/bin/pfatt-5268AC.sh
+    ssh root@pfsense chmod +x /usr/local/etc/rc.d/pfatt-5268AC.sh /root/bin/pfatt-5268AC.sh
     ```
 
 4. Connect cables:
