@@ -308,6 +308,14 @@ There is a whole thread on this at [DSLreports](http://www.dslreports.com/forum/
 However, I don't think this works for everyone. I had to explicitly tag my WAN traffic to VLAN0 which wasn't supported on my switch. 
 
 ## OPNSense / FreeBSD
+For OPNSense (tested and working on 19.1):
+follow the pfSense instructions, EXCEPT:
+1) modify pfatt.sh to set OPNSENSE='yes'
+2) put the pfatt.sh script into `/usr/local/etc/rc.syshook.d/early` as `99-pfatt.sh`
+3) do *NOT* modify config.xml, nor do any of the duid stuff
+4) note: You *CAN* use IPv6 Prefix id 0, as OPNSense does *NOT* assign a routeable IPv6 address to ngeth0
+
+
 
 I haven't tried this with OPNSense or native FreeBSD, but I imagine the process is ultimately the same with netgraph. Feel free to submit a PR with notes on your experience.
 
