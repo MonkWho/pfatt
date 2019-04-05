@@ -311,12 +311,10 @@ However, I don't think this works for everyone. I had to explicitly tag my WAN t
 For OPNSense (tested and working on 19.1):
 follow the pfSense instructions, EXCEPT:
 1) modify pfatt.sh to set OPNSENSE='yes'
-2) do *NOT* install the ng_etf.ko, as OPNSense is based on HardenedBSD 11.2, which is in turn based on FreeBSD 11.2
+2) do *NOT* install the ng_etf.ko, as OPNSense is based on HardenedBSD 11.2, which is in turn based on FreeBSD 11.2 and has the module already installed.
 3) put the pfatt.sh script into `/usr/local/etc/rc.syshook.d/early` as `99-pfatt.sh`
 4) do *NOT* modify config.xml, nor do any of the duid stuff
 5) note: You *CAN* use IPv6 Prefix id 0, as OPNSense does *NOT* assign a routeable IPv6 address to ngeth0
-
-
 
 I haven't tried this with native FreeBSD, but I imagine the process is ultimately the same with netgraph. Feel free to submit a PR with notes on your experience.
 
