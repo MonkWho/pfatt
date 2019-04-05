@@ -4,6 +4,7 @@ set -e
 ONT_IF='em0'
 RG_IF='em1'
 RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx'
+OPNSENSE='no'
 LOG=/var/log/pfatt.log
 
 getTimestamp(){
@@ -16,15 +17,18 @@ getTimestamp(){
     echo "$(getTimestamp)        ONT_IF: $ONT_IF"
     echo "$(getTimestamp)         RG_IF: $RG_IF"
     echo "$(getTimestamp) RG_ETHER_ADDR: $RG_ETHER_ADDR"
+    echo "$(getTimestamp)      OPNSENSE: $OPNSENSE"
 
     echo -n "$(getTimestamp) loading netgraph kernel modules... "
     /sbin/kldload -nq ng_etf
     echo "OK!"
 
-    echo -n "$(getTimestamp) attaching interfaces to ng_ether... "
-    /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$ONT_IF');" 
-    /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$RG_IF');"
-    echo "OK!"
+    if [ ${OPNSENSE} != 'yes' ]; then
+        echo -n "$(getTimestamp) attaching interfaces to ng_ether... "
+        /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$ONT_IF');" 
+        /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$RG_IF');"
+        echo "OK!"
+    fi 
 
     echo "$(getTimestamp) building netgraph nodes..."
 
