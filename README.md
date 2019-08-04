@@ -320,7 +320,7 @@ I haven't tried this with native FreeBSD, but I imagine the process is ultimatel
 
 # U-verse TV
 
-TODO
+See [U-VERSE_TV.md](U-VERSE_TV.md)
 
 # References
 
@@ -338,3 +338,5 @@ This took a lot of testing and a lot of hours to figure out. A unique solution w
 - [rajl](https://forum.netgate.com/user/rajl) - for the netgraph idea - 1H8CaLNXembfzYGDNq1NykWU3gaKAjm8K5
 - [pyrodex](https://www.dslreports.com/profile/1717952) - for IPv6 - ?
 - [aus](https://github.com/aus) - 31m9ujhbsRRZs4S64njEkw8ksFSTTDcsRU
+- [/u/MisterBazz](https://www.reddit.com/user/MisterBazz/) - [for the initial setup guide on U-verse TV documentation](https://www.reddit.com/r/PFSENSE/comments/ag43rb/att_bgw210_true_independent_bridge_mode_uverse/) that formed the basis for [U-VERSE_TV.md](U-VERSE_TV.md)
+- [0xC0ncord](https://github.com/0xC0ncord) - for the [U-Verse TV Documentation](U-VERSE_TV.md)
