@@ -48,7 +48,7 @@ Since we will be plugging the DVR more or less directly into your pfSense box, y
 2. Configure the UVerseDVR interface.
     1. On pfSense, navigate to _Interfaces > Interface Assignments_
     2. Under **Available network ports** find and add the interface you connected your DVR to. Take note of the name it is added as.
-    3. Navigate to the interface's configuration by going to _Interfaces > <Newly created interface>_
+    3. Navigate to the interface's configuration by going to _Interfaces > (Newly created interface)_
     4. Change the interface's description to something more meaningful. I chose `UverseDVR`
     5. Ensure that **Enable** is checked.
     6. Set your pfSense's static IPv4 address for this new interface under **Static IPv4 Configuration**. This should be an RFC 1918 address that is not already in use on any other LAN in your network. You should also keep the size of the network relatively small. I chose `10.5.5.1/29`.
