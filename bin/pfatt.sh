@@ -7,6 +7,11 @@ RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx'
 OPNSENSE='no'
 LOG=/var/log/pfatt.log
 
+# Calculate version so we can manage some variations.
+VERSION_MAJOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\1/p' /etc/version`
+VERSION_MINOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\2/p' /etc/version`
+VERSION_PATCH=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\3/p' /etc/version`
+
 getTimestamp(){
     echo `date "+%Y-%m-%d %H:%M:%S :: [pfatt.sh] ::"`
 }
@@ -19,9 +24,11 @@ getTimestamp(){
     echo "$(getTimestamp) RG_ETHER_ADDR: $RG_ETHER_ADDR"
     echo "$(getTimestamp)      OPNSENSE: $OPNSENSE"
 
-    echo -n "$(getTimestamp) loading netgraph kernel modules... "
-    /sbin/kldload -nq ng_etf
-    echo "OK!"
+    if [ ${OPNSENSE} = 'yes' ] || ( [ ${VERSION_MAJOR} -ge '2' ] && [ ${VERSION_MINOR} -ge '4' ] && [ ${VERSION_PATCH} -ge '5' ] ); then
+        echo -n "$(getTimestamp) loading netgraph kernel modules... "
+        /sbin/kldload -nq ng_etf
+        echo "OK!"
+    fi
 
     if [ ${OPNSENSE} != 'yes' ]; then
         echo -n "$(getTimestamp) attaching interfaces to ng_ether... "
