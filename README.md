@@ -315,6 +315,17 @@ follow the pfSense instructions, EXCEPT:
 3) put the pfatt.sh script into `/usr/local/etc/rc.syshook.d/early` as `99-pfatt.sh`
 4) do *NOT* modify config.xml, nor do any of the duid stuff
 5) note: You *CAN* use IPv6 Prefix id 0, as OPNSense does *NOT* assign a routeable IPv6 address to ngeth0
+6) **For OPNSense 20.1 Only:** OPNSense no longer loads the netgraph kernel modules by default. To load them, run this command and restart your device.
+```bash
+cat << EOF > /boot/loader.conf.local
+netgraph_load="YES"
+ng_ether_load="YES"
+ng_eiface_load="YES"
+ng_one2many_load="YES"
+ng_vlan_load="YES"
+ng_etf_load="YES"
+EOF
+```
 
 I haven't tried this with native FreeBSD, but I imagine the process is ultimately the same with netgraph. Feel free to submit a PR with notes on your experience.
 
