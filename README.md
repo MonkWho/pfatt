@@ -1,10 +1,10 @@
 # About
 
-This repository includes my notes on enabling a true bridge mode setup with AT&T U-Verse and pfSense. This method utilizes [netgraph](https://www.freebsd.org/cgi/man.cgi?netgraph(4)) which is a graph based kernel networking subsystem of FreeBSD. This low-level solution was required to account for the unique issues surrounding bridging 802.1X traffic and tagging a VLAN with an id of 0. I've tested and confirmed this setup works with AT&T U-Verse Internet on the ARRIS NVG589 and BGW210-700 residential gateways (probably others too). 
+This repository includes my notes on enabling a true bridge mode setup with AT&T U-Verse and pfSense. This method utilizes [netgraph](https://www.freebsd.org/cgi/man.cgi?netgraph(4)) which is a graph based kernel networking subsystem of FreeBSD. This low-level solution was required to account for the unique issues surrounding bridging 802.1X traffic and tagging a VLAN with an id of 0. I've tested and confirmed this setup works with AT&T U-Verse Internet on the ARRIS NVG589, NVG599 and BGW210-700 residential gateways (probably others too). For Pace 5268AC, see [issue #5](https://github.com/aus/pfatt/issues/5). 
 
 There are a few other methods to accomplish true bridge mode, so be sure to see what easiest for you. True Bridge Mode is also possible in a Linux via ebtables or using hardware with a VLAN swap trick. For me, I was not using a Linux-based router and the VLAN swap did not seem to work for me.
 
-While many AT&T residential gateways offer something called _IP Passthrough_, it does not provide the same advantages of a true bridge mode. For example, the NAT table is still managed by the gateway, which is limited to a measily 8192 sessions (although it becomes unstable at even 60% capacity).
+While many AT&T residential gateways offer something called _IP Passthrough_, it does not provide the same advantages of a true bridge mode. For example, the NAT table is still managed by the gateway, which is limited to a measly 8192 sessions (although it becomes unstable at even 60% capacity).
 
 The netgraph method will allow you to fully utilize your own router and fully bypass your residential gateway. It survives reboots, re-authentications, IPv6, and new DHCP leases.
 
@@ -12,20 +12,20 @@ The netgraph method will allow you to fully utilize your own router and fully by
 
 Before continuing to the setup, it's important to understand how this method works. This will make configuration and troubleshooting much easier.
 
-## Standard Procedue
+## Standard Procedure
 
 First, let's talk about what happens in the standard setup (without any bypass). At a high level, the following process happens when the gateway boots up:
 
-1. All traffic on the ONT is protected with [802.1/X](https://en.wikipedia.org/wiki/IEEE_802.1X). So in order to talk to anything, the Router Gateway must first perform the [authentication procedure](https://en.wikipedia.org/wiki/IEEE_802.1X#Typical_authentication_progression). This process uses a unique ceritificate that is hardcoded on your residential gateway.
-1. Once the authentication completes, you'll be to properly "talk" to the outside. But strangely, all of your traffic will need to be tagged with VLAN id 0 before the IP gateway will respond.  I believe VLAN0 is an obscure Cisco feature of 802.1Q CoS, but I'm not really sure.  
+1. All traffic on the ONT is protected with [802.1/X](https://en.wikipedia.org/wiki/IEEE_802.1X). So in order to talk to anything, the Router Gateway must first perform the [authentication procedure](https://en.wikipedia.org/wiki/IEEE_802.1X#Typical_authentication_progression). This process uses a unique certificate that is hardcoded on your residential gateway.
+1. Once the authentication completes, you'll be able to properly "talk" to the outside. But strangely, all of your traffic will need to be tagged with VLAN id 0 before the IP gateway will respond.  I believe VLAN0 is an obscure Cisco feature of 802.1Q CoS, but I'm not really sure.  
 1. Once traffic is tagged with VLAN0, your residential gateway needs to request a public IPv4 address via DHCP. The MAC address in the DHCP request needs to match that of the MAC address that's assigned to your AT&T account. Other than that, there's nothing special about the DCHPv4 handshake.
 1. After the DHCP lease is issued, the WAN setup is complete. Your LAN traffic is then NAT'd and routed to the outside.
 
 ## Bypass Procedure
 
-To bypass the gateway using pfSense, we can emulate the standard procedure. If we connect our Residential Gateway and ONT to our pfSense box, we can brigde the 802.1/X authentication sequence, tag our WAN traffic as VLAN0, and request a public IPv4 via DHCP using a spoofed MAC address.
+To bypass the gateway using pfSense, we can emulate the standard procedure. If we connect our Residential Gateway and ONT to our pfSense box, we can bridge the 802.1/X authentication sequence, tag our WAN traffic as VLAN0, and request a public IPv4 via DHCP using a spoofed MAC address.
 
-Unfortunately, there are some challenges with emulating this proccess. First, it's against RFC to bridge 802.1/X traffic and it is not supported. Second, tagging traffic as VLAN0 is not supported through the standard interfaces. 
+Unfortunately, there are some challenges with emulating this process. First, it's against RFC to bridge 802.1/X traffic and it is not supported. Second, tagging traffic as VLAN0 is not supported through the standard interfaces. 
 
 This is where netgraph comes in. Netgraph allows you to break some rules and build the proper plumbing to make this work. So, our cabling looks like this:
 
@@ -43,7 +43,7 @@ Residential Gateway
 
 With netgraph, our procedure looks like this (at a high level):
 
-1. The Residential Gateway initates a 802.1/X EAPOL-START.
+1. The Residential Gateway initiates a 802.1/X EAPOL-START.
 1. The packet then is bridged through netgraph to the ONT interface.
 1. If the packet matches an 802.1/X type (which is does), it is passed to the ONT interface. If it does not, the packet is discarded. This prevents our Residential Gateway from initiating DHCP. We want pfSense to handle that.
 1. The ONT should then see and respond to the EAPOL-START, which is passed back through our netgraph back to the residential gateway. At this point, the 802.1/X authentication should be complete.
@@ -69,14 +69,14 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
 
 ## Install
 
-1. Copy the `bin/ng_etf.ko` kernel module to `/boot/kernel` on your pfSense box (because it isn't included):
+1. Copy the `bin/ng_etf.ko` amd64 kernel module to `/boot/kernel` on your pfSense box (because it isn't included):
 
     a) Use the pre-compiled kernel module from me, a random internet stranger:
     ```
     scp bin/ng_etf.ko root@pfsense:/boot/kernel/
     ssh root@pfsense chmod 555 /boot/kernel/ng_etf.ko
     ```
-    **NOTE:** The `ng_etf.ko` in this repo was compiled from the FreeBSD 11.1 release source code. It seems to also work fine on FreeBSD 11.2/pfSense 2.4.4 since there have been [minimal changes](https://github.com/freebsd/freebsd/commits/master/sys/netgraph/ng_etf.c).  
+    **NOTE:** The `ng_etf.ko` in this repo was compiled for amd64 from the FreeBSD 11.2 release source code. It may also work on other/future versions of pfSense depending if there have been [significant changes](https://github.com/freebsd/freebsd/commits/master/sys/netgraph/ng_etf.c).  
 
     b) Or you, a responsible sysadmin, can compile the module yourself from another, trusted FreeBSD machine. _You cannot build packages directly on pfSense._ Your FreeBSD version should match that of your pfSense version. (Example: pfSense 2.4.4 = FreeBSD 11.2)
     ```
@@ -89,6 +89,8 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     ssh root@pfsense chmod 555 /boot/kernel/ng_etf.ko
     ```
 
+    **NOTE:** You'll need to tweak your compiler parameters if you need to build for another architecture, like ARM.
+
 2. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device. In my environment, it's:
     ```shell
     ONT_IF='bce0' # NIC -> ONT / Outside
@@ -98,19 +100,31 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
 
 3. Copy `bin/pfatt.sh` to `/root/bin` (or any directory):
     ```
-    scp bin/pfatt.sh root@pfsense:/usr/local/etc/rc.d/
+    ssh root@pfsense mkdir /root/bin
+    scp bin/pfatt.sh root@pfsense:/root/bin/
     ssh root@pfsense chmod +x /root/bin/pfatt.sh
     ```
-    Now edit your `config.xml` to include `<earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd>` above `</system>`
+    Now edit your `/conf/config.xml` to include `<earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd>` above `</system>`. 
+    
+    **NOTE:** If you have the 5268AC, you'll also need to install `pfatt-5268.sh` due to [issue #5](https://github.com/aus/pfatt/issues/5). The script monitors your connection and disables or enables the EAP bridging as needed. It's a hacky workaround, but it enables you to keep your 5268AC connected, avoid EAP-Logoffs and survive reboots. Consider changing the `PING_HOST` in `pfatt-5268AC.sh` to a reliable host. Then perform these additional steps to install:
+
+    Copy `bin/pfatt-5268AC` to `/usr/local/etc/rc.d/`
+    
+    Copy `bin/pfatt-5268AC.sh` to `/root/bin/`:
+    ```
+    scp bin/pfatt-5268AC root@pfsense:/usr/local/etc/rc.d/pfatt-5268AC.sh
+    scp bin/pfatt-5268AC.sh root@pfsense:/root/bin/
+    ssh root@pfsense chmod +x /usr/local/etc/rc.d/pfatt-5268AC.sh /root/bin/pfatt-5268AC.sh
+    ```
 
 4. Connect cables:
-    - `$RG_IF` to Residiential Gateway on the ONT port (not the LAN ports!)
+    - `$RG_IF` to Residential Gateway on the ONT port (not the LAN ports!)
     - `$ONT_IF` to ONT (outside)
     - `LAN NIC` to local switch (as normal)
 
 5. Prepare for console access.
 6. Reboot.
-7. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not change. pfSense does not need to manage `$RG_IF` or `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
+7. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not normally change. However, if you moved or re-purposed your LAN interface for this setup, you'll need to re-apply any existing configuration (like your VLANs) to your new LAN interface. pfSense does not need to manage `$RG_IF` or `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
 8. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
 
 If everything is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, tagging the WAN traffic with VLAN0, and your WAN interface configured with an IPv4 address via DHCP.
@@ -126,7 +140,7 @@ This setup assumes you have a fairly recent version of pfSense. I'm using 2.4.4.
 1. Go to _System > Advanced > Networking_
 1. Configure **DHCP6 DUID** to _DUID-EN_
 1. Configure **DUID-EN** to _3561_
-1. Configure your **IANA Private Enterprise Number**. This number is unique for each customer and (I believe) based off your Residential Gateway serial number. I grabbed mine off a pcap of the Residential Gateway. Fire up Wireshark and look for the value in _DHCPv6 > Client Identifier > Identifier_. Add the value as colon separated hex values `00:00:00`.
+1. Configure your **IANA Private Enterprise Number**. This number is unique for each customer and (I believe) based off your Residential Gateway serial number. You can generate your DUID using [gen-duid.sh](https://github.com/aus/pfatt/blob/master/bin/gen-duid.sh), which just takes a few inputs. Or, you can take a pcap of the Residential Gateway with some DHCPv6 traffic. Then fire up Wireshark and look for the value in _DHCPv6 > Client Identifier > Identifier_. Add the value as colon separated hex values `00:00:00`.
 1. Save
 
 **WAN Setup**
@@ -134,57 +148,39 @@ This setup assumes you have a fairly recent version of pfSense. I'm using 2.4.4.
 1. Go to _Interfaces > WAN_
 1. Enable **IPv6 Configuration Type** as _DHCP6_
 1. Scroll to _DCHP6 Client Configuration_
-1. Enable _Advanced Configuration_
-1. Enable _Configuration Override_
-1. Enable _Debug_
+1. Enable **DHCPv6 Prefix Delegation size** as _60_
+1. Enable _Send IPv6 prefix hint_
 1. Enable _Do not wait for a RA_
-1. Configure **Configuration File** to `/cf/conf/att_dhcp6.conf`
 1. Save
-
-**Configuration File**
-
-1. Logon to your pfsense box and add the following file to `/cf/conf/att_dhcp6.conf` changing the WAN / LAN interface names to match your setup:
-```
-# WAN
-interface ngeth0 {
-        send ia-na 1;   # request stateful address
-        send ia-pd 1;   # request prefix delegation - LAN
-        request domain-name-servers;
-};
-id-assoc na 1 { };
-id-assoc pd 1 {
-        prefix ::/60 infinity;
-        # LAN
-        prefix-interface bce1 {
-                sla-id 0;
-                sla-len 4;
-        };
-};
-```
 
 **LAN Setup**
 
 1. Go to _Interfaces > LAN_
 1. Change the **IPv6 Configuration Type** to _Track Interface_
 1. Under Track IPv6 Interface, assign **IPv6 Interface** to your WAN interface.
-1. Configure **IPv6 Prefix ID** to _0_
+1. Configure **IPv6 Prefix ID** to _1_. We start at _1_ and not _0_ because pfSense will use prefix/address ID _0_ for itself and it seems AT&T is flakey about assigning IPv6 prefixes when a request is made with a prefix ID that matches the prefix/address ID of the router.
 1. Save
+
+If you have additional LAN interfaces repeat these steps for each interface except be sure to provide an **IPv6 Prefix ID** that is not _0_ and is unique among the interfaces you've configured so far.
 
 **DHCPv6 Server & RA**
 
 1. Go to _Services > DHCPv6 Server & RA_
 1. Enable DHCPv6 server on interface LAN
-1. Configure a range of ::1000 to ::2000
+1. Configure a range of ::0001 to ::ffff:ffff:ffff:fffe
 1. Configure a **Prefix Delegation Range** to _64_
-1. Add a few IPv6 DNS servers
 1. Save
 1. Go to the _Router Advertisements_ tab
 1. Configure **Router mode** as _Stateless DHCP_
 1. Save
 
-That's it! Now your clients should be recieving public IPv6 addresses via DHCP6.
+That's it! Now your clients should be receiving public IPv6 addresses via DHCP6.
 
 # Troubleshooting
+
+## Logging
+
+Output from `pfatt.sh` and `pfatt-5268AC.sh` can be found in `/var/log/pfatt.log`.
 
 ## tcpdump
 
@@ -221,11 +217,11 @@ If you don't see traffic being bridged between `ngeth0` and `$ONT_IF`, then netg
 
 ## Promiscuous Mode
 
-`pfatt.sh` will put `$RG_IF` in promiscuous mode via `/sbin/ifconfig $RG_IF promisc`. Otherwise, the EAP packets would not bridge. I think this is necessary for everyone but I'm not sure. Turn it off if it's casuing issues. 
+`pfatt.sh` will put `$RG_IF` in promiscuous mode via `/sbin/ifconfig $RG_IF promisc`. Otherwise, the EAP packets would not bridge. I think this is necessary for everyone but I'm not sure. Turn it off if it's causing issues. 
 
 ## netgraph
 
-The netgraph system provides a uniform and modular system for the implementation of kernel objects which perform various networking functions. If you're unfamilar with netgraph, this [tutorial](http://www.netbsd.org/gallery/presentations/ast/2012_AsiaBSDCon/Tutorial_NETGRAPH.pdf) is a great introduction. 
+The netgraph system provides a uniform and modular system for the implementation of kernel objects which perform various networking functions. If you're unfamiliar with netgraph, this [tutorial](http://www.netbsd.org/gallery/presentations/ast/2012_AsiaBSDCon/Tutorial_NETGRAPH.pdf) is a great introduction. 
 
 Your netgraph should look something like this:
 
@@ -309,15 +305,22 @@ If you're looking how to do this on a Linux-based router, please refer to [this 
 
 There is a whole thread on this at [DSLreports](http://www.dslreports.com/forum/r29903721-AT-T-Residential-Gateway-Bypass-True-bridge-mode). The gist of this method is that you connect your ONT, RG and WAN to a switch. Create two VLANs. Assign the ONT and RG to VLAN1 and the WAN to VLAN2. Let the RG authenticate, then change the ONT VLAN to VLAN2. The WAN the DHCPs and your in business.
 
-However, I don't think this works for everyone. I had to explicity tag my WAN traffic to VLAN0 which wasn't supported on my switch. 
+However, I don't think this works for everyone. I had to explicitly tag my WAN traffic to VLAN0 which wasn't supported on my switch. 
 
 ## OPNSense / FreeBSD
+For OPNSense (tested and working on 19.1):
+follow the pfSense instructions, EXCEPT:
+1) modify pfatt.sh to set OPNSENSE='yes'
+2) do *NOT* install the ng_etf.ko, as OPNSense is based on HardenedBSD 11.2, which is in turn based on FreeBSD 11.2 and has the module already installed.
+3) put the pfatt.sh script into `/usr/local/etc/rc.syshook.d/early` as `99-pfatt.sh`
+4) do *NOT* modify config.xml, nor do any of the duid stuff
+5) note: You *CAN* use IPv6 Prefix id 0, as OPNSense does *NOT* assign a routeable IPv6 address to ngeth0
 
-I haven't tried this with OPNSense or native FreeBSD, but I imagine the process is utlimately the same with netgraph. Feel free to submit a PR with notes on your experience.
+I haven't tried this with native FreeBSD, but I imagine the process is ultimately the same with netgraph. Feel free to submit a PR with notes on your experience.
 
 # U-verse TV
 
-TODO
+See [U-VERSE_TV.md](U-VERSE_TV.md)
 
 # References
 
@@ -335,3 +338,5 @@ This took a lot of testing and a lot of hours to figure out. A unique solution w
 - [rajl](https://forum.netgate.com/user/rajl) - for the netgraph idea - 1H8CaLNXembfzYGDNq1NykWU3gaKAjm8K5
 - [pyrodex](https://www.dslreports.com/profile/1717952) - for IPv6 - ?
 - [aus](https://github.com/aus) - 31m9ujhbsRRZs4S64njEkw8ksFSTTDcsRU
+- [/u/MisterBazz](https://www.reddit.com/user/MisterBazz/) - [for the initial setup guide on U-verse TV documentation](https://www.reddit.com/r/PFSENSE/comments/ag43rb/att_bgw210_true_independent_bridge_mode_uverse/) that formed the basis for [U-VERSE_TV.md](U-VERSE_TV.md)
+- [0xC0ncord](https://github.com/0xC0ncord) - for the [U-Verse TV Documentation](U-VERSE_TV.md)
