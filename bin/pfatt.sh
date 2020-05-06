@@ -24,10 +24,19 @@ getTimestamp(){
     echo "$(getTimestamp) RG_ETHER_ADDR: $RG_ETHER_ADDR"
     echo "$(getTimestamp)      OPNSENSE: $OPNSENSE"
 
-    if [ ${OPNSENSE} = 'yes' ] || ( [ ${VERSION_MAJOR} -ge '2' ] && [ ${VERSION_MINOR} -ge '4' ] && [ ${VERSION_PATCH} -ge '5' ] ); then
+    if ( [ ${VERSION_MAJOR} -ge '2' ] && [ ${VERSION_MINOR} -ge '4' ] && [ ${VERSION_PATCH} -lt '5' ] ); then
         echo -n "$(getTimestamp) loading netgraph kernel modules... "
         /sbin/kldload -nq ng_etf
         echo "OK!"
+    fi
+
+    if [ ${OPNSENSE} = 'yes' ]; then
+        /sbin/kldload -nq netgraph
+        /sbin/kldload -nq ng_ether
+        /sbin/kldload -nq ng_etf
+        /sbin/kldload -nq ng_vlan
+        /sbin/kldload -nq ng_eiface
+        /sbin/kldload -nq ng_one2many
     fi
 
     if [ ${OPNSENSE} != 'yes' ]; then
