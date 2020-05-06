@@ -65,18 +65,18 @@ But enough talk. Now for the fun part!
 * Local or console access to pfSense
 * pfSense 2.4.4 _(confirmed working in 2.4.3 too, other versions should work but YMMV)_
 
-If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](https://amzn.to/2P0yn8k) as your third. It has the Asix AX88772 chipset, which is supported in FreeBSD with the [axe](https://www.freebsd.org/cgi/man.cgi?query=axe&sektion=4) driver. I've confirmed it works in my setup. The driver was already loaded and I didn't have to install or configure anything to get it working. Also, don't worry about the poor performance of USB or 100Mbps NICs. This third NIC will only send/recieve a few packets periodicaly to authenticate your Router Gateway. The rest of your traffic will utilize your other (and much faster) NICs.
+If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](https://www.amazon.com/gp/product/B00007IFED) as your third. It has the Asix AX88772 chipset, which is supported in FreeBSD with the [axe](https://www.freebsd.org/cgi/man.cgi?query=axe&sektion=4) driver. I've confirmed it works in my setup. The driver was already loaded and I didn't have to install or configure anything to get it working. Also, don't worry about the poor performance of USB or 100Mbps NICs. This third NIC will only send/recieve a few packets periodicaly to authenticate your Router Gateway. The rest of your traffic will utilize your other (and much faster) NICs.
 
 ## Install
 
-1. Copy the `bin/ng_etf.ko` amd64 kernel module to `/boot/kernel` on your pfSense box (because it isn't included):
+1. Copy the `bin/ng_etf.ko` amd64 kernel module to `/boot/kernel` on your pfSense box because it isn't included is pfSense prior to 2.4.5 (_if you are running pfSense 2.4.5 please see instruction in the [master branch](https://github.com/MonkWho/pfatt/blob/master/README.md)_):
 
     a) Use the pre-compiled kernel module from me, a random internet stranger:
     ```
     scp bin/ng_etf.ko root@pfsense:/boot/kernel/
     ssh root@pfsense chmod 555 /boot/kernel/ng_etf.ko
     ```
-    **NOTE:** The `ng_etf.ko` in this repo was compiled for amd64 from the FreeBSD 11.2 release source code. It may also work on other/future versions of pfSense depending if there have been [significant changes](https://github.com/freebsd/freebsd/commits/master/sys/netgraph/ng_etf.c).  
+    **NOTE:** The `ng_etf.ko` in this repo was compiled for amd64 from the FreeBSD 11.2 release source code. It may or may not work on other versions of pfSense depending if there have been [significant changes](https://github.com/freebsd/freebsd/commits/master/sys/netgraph/ng_etf.c).  
 
     b) Or you, a responsible sysadmin, can compile the module yourself from another, trusted FreeBSD machine. _You cannot build packages directly on pfSense._ Your FreeBSD version should match that of your pfSense version. (Example: pfSense 2.4.4 = FreeBSD 11.2)
     ```
@@ -93,8 +93,8 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
 
 2. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device. In my environment, it's:
     ```shell
-    ONT_IF='bce0' # NIC -> ONT / Outside
-    RG_IF='ue0'  # NIC -> Residential Gateway's ONT port
+    ONT_IF='xx0' # NIC -> ONT / Outside
+    RG_IF='xx1'  # NIC -> Residential Gateway's ONT port
     RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx' # MAC address of Residential Gateway
     ```
 
