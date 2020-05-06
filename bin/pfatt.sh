@@ -1,15 +1,10 @@
 #!/bin/sh
 set -e
 
-ONT_IF='em0'
-RG_IF='em1'
+ONT_IF='xx0'
+RG_IF='xx1'
 RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx'
 LOG=/var/log/pfatt.log
-
-# Calculate pfsense version so we can manage some variations.
-VERSION_MAJOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\1/p' /etc/version`
-VERSION_MINOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\2/p' /etc/version`
-VERSION_PATCH=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\3/p' /etc/version`
 
 getTimestamp(){
     echo `date "+%Y-%m-%d %H:%M:%S :: [pfatt.sh] ::"`
@@ -21,12 +16,6 @@ getTimestamp(){
     echo "$(getTimestamp)        ONT_IF: $ONT_IF"
     echo "$(getTimestamp)         RG_IF: $RG_IF"
     echo "$(getTimestamp) RG_ETHER_ADDR: $RG_ETHER_ADDR"
-
-    if ( [ ${VERSION_MAJOR} -ge '2' ] && [ ${VERSION_MINOR} -ge '4' ] && [ ${VERSION_PATCH} -lt '5' ] ); then
-        echo -n "$(getTimestamp) loading netgraph kernel modules... "
-        /sbin/kldload -nq ng_etf
-        echo "OK!"
-    fi
 
     echo -n "$(getTimestamp) attaching interfaces to ng_ether... "
     /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$ONT_IF');"
