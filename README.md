@@ -1,6 +1,6 @@
 # About
 
-This repository includes my notes on enabling a true bridge mode setup with AT&T U-Verse and pfSense. This method utilizes [netgraph](https://www.freebsd.org/cgi/man.cgi?netgraph(4)) which is a graph based kernel networking subsystem of FreeBSD. This low-level solution was required to account for the unique issues surrounding bridging 802.1X traffic and tagging a VLAN with an id of 0. I've tested and confirmed this setup works with AT&T U-Verse Internet on the ARRIS NVG589, NVG599 and BGW210-700 residential gateways (probably others too). For Pace 5268AC, see [issue #5](https://github.com/aus/pfatt/issues/5). 
+This repository includes my notes on enabling a true bridge mode setup with AT&T U-Verse and pfSense. This method utilizes [netgraph](https://www.freebsd.org/cgi/man.cgi?netgraph(4)) which is a graph based kernel networking subsystem of FreeBSD. This low-level solution was required to account for the unique issues surrounding bridging 802.1X traffic and tagging a VLAN with an id of 0. I've tested and confirmed this setup works with AT&T U-Verse Internet on the ARRIS NVG589, NVG599 and BGW210-700 residential gateways (probably others too). For Pace 5268AC see special details below.
 
 There are a few other methods to accomplish true bridge mode, so be sure to see what easiest for you. True Bridge Mode is also possible in a Linux via ebtables or using hardware with a VLAN swap trick. For me, I was not using a Linux-based router and the VLAN swap did not seem to work for me.
 
@@ -106,7 +106,7 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     ```
     Now edit your `/conf/config.xml` to include `<earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd>` above `</system>`. 
     
-    **NOTE:** If you have the 5268AC, you'll also need to install `pfatt-5268.sh` due to [issue #5](https://github.com/aus/pfatt/issues/5). The script monitors your connection and disables or enables the EAP bridging as needed. It's a hacky workaround, but it enables you to keep your 5268AC connected, avoid EAP-Logoffs and survive reboots. Consider changing the `PING_HOST` in `pfatt-5268AC.sh` to a reliable host. Then perform these additional steps to install:
+    **NOTE:** If you have the 5268AC, you'll also need to install `pfatt-5268.sh`. The script monitors your connection and disables or enables the EAP bridging as needed. It's a hacky workaround, but it enables you to keep your 5268AC connected, avoid EAP-Logoffs and survive reboots. Consider changing the `PING_HOST` in `pfatt-5268AC.sh` to a reliable host. Then perform these additional steps to install:
 
     Copy `bin/pfatt-5268AC` to `/usr/local/etc/rc.d/`
     
@@ -308,24 +308,13 @@ There is a whole thread on this at [DSLreports](http://www.dslreports.com/forum/
 However, I don't think this works for everyone. I had to explicitly tag my WAN traffic to VLAN0 which wasn't supported on my switch. 
 
 ## OPNSense / FreeBSD
-For OPNSense (tested and working on 19.1):
+For OPNSense 20.1:
 follow the pfSense instructions, EXCEPT:
-1) modify pfatt.sh to set OPNSENSE='yes'
-2) do *NOT* install the ng_etf.ko, as OPNSense is based on HardenedBSD 11.2, which is in turn based on FreeBSD 11.2 and has the module already installed.
-3) put the pfatt.sh script into `/usr/local/etc/rc.syshook.d/early` as `99-pfatt.sh`
+1) use file opnatt.sh
+2) do *NOT* install the ng_etf.ko, as OPNSense already has this module installed.
+3) put the opnatt.sh script into `/usr/local/etc/rc.syshook.d/early` as `99-opnatt.sh
 4) do *NOT* modify config.xml, nor do any of the duid stuff
 5) note: You *CAN* use IPv6 Prefix id 0, as OPNSense does *NOT* assign a routeable IPv6 address to ngeth0
-6) **For OPNSense 20.1 Only:** OPNSense no longer loads the netgraph kernel modules by default. To load them, run this command and restart your device.
-```bash
-cat << EOF > /boot/loader.conf.local
-netgraph_load="YES"
-ng_ether_load="YES"
-ng_eiface_load="YES"
-ng_one2many_load="YES"
-ng_vlan_load="YES"
-ng_etf_load="YES"
-EOF
-```
 
 I haven't tried this with native FreeBSD, but I imagine the process is ultimately the same with netgraph. Feel free to submit a PR with notes on your experience.
 
