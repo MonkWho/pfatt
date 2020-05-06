@@ -4,15 +4,12 @@ set -e
 ONT_IF='em0'
 RG_IF='em1'
 RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx'
-OPNSENSE='no'
 LOG=/var/log/pfatt.log
 
-if [ ${OPNSENSE} != 'yes' ]; then
-    # Calculate pfsense version so we can manage some variations.
-    VERSION_MAJOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\1/p' /etc/version`
-    VERSION_MINOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\2/p' /etc/version`
-    VERSION_PATCH=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\3/p' /etc/version`
-fi 
+# Calculate pfsense version so we can manage some variations.
+VERSION_MAJOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\1/p' /etc/version`
+VERSION_MINOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\2/p' /etc/version`
+VERSION_PATCH=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\3/p' /etc/version`
 
 getTimestamp(){
     echo `date "+%Y-%m-%d %H:%M:%S :: [pfatt.sh] ::"`
@@ -24,7 +21,6 @@ getTimestamp(){
     echo "$(getTimestamp)        ONT_IF: $ONT_IF"
     echo "$(getTimestamp)         RG_IF: $RG_IF"
     echo "$(getTimestamp) RG_ETHER_ADDR: $RG_ETHER_ADDR"
-    echo "$(getTimestamp)      OPNSENSE: $OPNSENSE"
 
     if ( [ ${VERSION_MAJOR} -ge '2' ] && [ ${VERSION_MINOR} -ge '4' ] && [ ${VERSION_PATCH} -lt '5' ] ); then
         echo -n "$(getTimestamp) loading netgraph kernel modules... "
@@ -32,21 +28,10 @@ getTimestamp(){
         echo "OK!"
     fi
 
-    if [ ${OPNSENSE} = 'yes' ]; then
-        /sbin/kldload -nq netgraph
-        /sbin/kldload -nq ng_ether
-        /sbin/kldload -nq ng_etf
-        /sbin/kldload -nq ng_vlan
-        /sbin/kldload -nq ng_eiface
-        /sbin/kldload -nq ng_one2many
-    fi
-
-    if [ ${OPNSENSE} != 'yes' ]; then
-        echo -n "$(getTimestamp) attaching interfaces to ng_ether... "
-        /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$ONT_IF');" 
-        /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$RG_IF');"
-        echo "OK!"
-    fi 
+    echo -n "$(getTimestamp) attaching interfaces to ng_ether... "
+    /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$ONT_IF');"
+    /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$RG_IF');"
+    echo "OK!"
 
     echo "$(getTimestamp) building netgraph nodes..."
 
