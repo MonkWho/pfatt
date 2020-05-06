@@ -7,10 +7,12 @@ RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx'
 OPNSENSE='no'
 LOG=/var/log/pfatt.log
 
-# Calculate version so we can manage some variations.
-VERSION_MAJOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\1/p' /etc/version`
-VERSION_MINOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\2/p' /etc/version`
-VERSION_PATCH=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\3/p' /etc/version`
+if [ ${OPNSENSE} != 'yes' ]; then
+    # Calculate pfsense version so we can manage some variations.
+    VERSION_MAJOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\1/p' /etc/version`
+    VERSION_MINOR=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\2/p' /etc/version`
+    VERSION_PATCH=`sed -nre 's/([0-9])+\.([0-9])+\.([0-9])+.*/\3/p' /etc/version`
+fi 
 
 getTimestamp(){
     echo `date "+%Y-%m-%d %H:%M:%S :: [pfatt.sh] ::"`
