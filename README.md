@@ -63,7 +63,7 @@ But enough talk. Now for the fun part!
 * At least __three__ physical network interfaces on your pfSense server
 * The MAC address of your Residential Gateway
 * Local or console access to pfSense
-* pfSense 2.4.4 running on on amd64 architecture _(confirmed working in 2.4.3 too, other versions should work but YMMV)_
+* pfSense 2.4.4 running on amd64 architecture _(confirmed working in 2.4.3 too, other versions should work but YMMV)_
 
 If you are running pfSense on anything other than amd64 architecture you should compile your own version of ng_etf.
 
