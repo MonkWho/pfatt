@@ -63,7 +63,9 @@ But enough talk. Now for the fun part!
 * At least __three__ physical network interfaces on your pfSense server
 * The MAC address of your Residential Gateway
 * Local or console access to pfSense
-* pfSense 2.4.4 _(confirmed working in 2.4.3 too, other versions should work but YMMV)_
+* pfSense 2.4.4 running on on amd64 architecture _(confirmed working in 2.4.3 too, other versions should work but YMMV)_
+
+If you are running pfSense on anything other than amd64 architecture you should compile your own version of ng_etf.
 
 If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](https://www.amazon.com/gp/product/B00007IFED) as your third. It has the Asix AX88772 chipset, which is supported in FreeBSD with the [axe](https://www.freebsd.org/cgi/man.cgi?query=axe&sektion=4) driver. I've confirmed it works in my setup. The driver was already loaded and I didn't have to install or configure anything to get it working. Also, don't worry about the poor performance of USB or 100Mbps NICs. This third NIC will only send/recieve a few packets periodicaly to authenticate your Router Gateway. The rest of your traffic will utilize your other (and much faster) NICs.
 
