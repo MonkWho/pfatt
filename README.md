@@ -87,28 +87,33 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     scp bin/pfatt.sh root@pfsense:/root/bin/
     ssh root@pfsense chmod +x /root/bin/pfatt.sh
     ```
-    Now edit your `/conf/config.xml` to include `<earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd>` above `</system>`. 
-    
-    **NOTE:** If you have the 5268AC, you'll also need to install `pfatt-5268.sh`. The script monitors your connection and disables or enables the EAP bridging as needed. It's a hacky workaround, but it enables you to keep your 5268AC connected, avoid EAP-Logoffs and survive reboots. Consider changing the `PING_HOST` in `pfatt-5268AC.sh` to a reliable host. Then perform these additional steps to install:
 
-    Copy `bin/pfatt-5268AC` to `/usr/local/etc/rc.d/`
-    
-    Copy `bin/pfatt-5268AC.sh` to `/root/bin/`:
+    **NOTE:** If you have the 5268AC, you'll also need to install `pfatt-5268AC-startup.sh` and `pfatt-5268.sh`. The scripts monitor your connection and disable or enable the EAP bridging as needed. It's a hacky workaround, but it enables you to keep your 5268AC connected, avoid EAP-Logoffs and survive reboots. Consider changing the `PING_HOST` in `pfatt-5268AC.sh` to a reliable host. Then perform these additional steps to install:
     ```
-    scp bin/pfatt-5268AC root@pfsense:/usr/local/etc/rc.d/pfatt-5268AC.sh
+    scp bin/pfatt-5268AC-startup.sh root@pfsense:/usr/local/etc/rc.d/pfatt-5268AC-startup.sh
     scp bin/pfatt-5268AC.sh root@pfsense:/root/bin/
-    ssh root@pfsense chmod +x /usr/local/etc/rc.d/pfatt-5268AC.sh /root/bin/pfatt-5268AC.sh
+    ssh root@pfsense chmod +x /usr/local/etc/rc.d/pfatt-5268AC-startup.sh /root/bin/pfatt-5268AC.sh
     ```
 
-3. Connect cables:
+3. To start pfatt.sh script at the beginning of the boot process pfSense team recomments you use a package called shellcmd. Use pfSense package installer to find and install it. Once you have shellcmd package installed you can find it in Services > Shellcmd. Now add a new command and fill it up accordingly (make sure to select earlyshellcmd from a dropdown):
+    ```
+    Command: /root/bin/pfatt.sh
+    Shellcmd Type: earlyshellcmd
+    ```
+    It should look like this:
+    ![Shellcmd Settings](img/Shellcmd.png)
+    
+    This can also be acomplished by manually editing your pfSense /conf/config.xml file. Add <earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd> above </system>. This method is not recommended and is frowned upon by pfSense team.
+    
+4. Connect cables:
     - `$RG_IF` to Residential Gateway on the ONT port (not the LAN ports!)
     - `$ONT_IF` to ONT (outside)
     - `LAN NIC` to local switch (as normal)
 
-4. Prepare for console access.
-5. Reboot.
-6. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not normally change. However, if you moved or re-purposed your LAN interface for this setup, you'll need to re-apply any existing configuration (like your VLANs) to your new LAN interface. pfSense does not need to manage `$RG_IF` or `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
-7. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
+5. Prepare for console access.
+6. Reboot.
+7. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not normally change. However, if you moved or re-purposed your LAN interface for this setup, you'll need to re-apply any existing configuration (like your VLANs) to your new LAN interface. pfSense does not need to manage `$RG_IF` or `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
+8. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
 
 If everything is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, tagging the WAN traffic with VLAN0, and your WAN interface configured with an IPv4 address via DHCP.
 
