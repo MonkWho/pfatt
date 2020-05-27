@@ -32,17 +32,17 @@
 
 # Required Config
 # ===============
-ONT_IF="igb0"
-RG_ETHER_ADDR="00:00:00:00:00:00"
+ONT_IF="xx0"
+RG_ETHER_ADDR="xx:xx:xx:xx:xx:xx"
 EAP_MODE="bridge"
 
 # Supplicant Config
 # =================
-EAP_SUPPLICANT_IDENTITY="00:00:00:00:00:00"
+EAP_SUPPLICANT_IDENTITY="xx:xx:xx:xx:xx:xx"
 
 # Bridge Config
 # =============
-EAP_BRIDGE_IF="igb1"
+EAP_BRIDGE_IF="xx1"
 EAP_BRIDGE_5268AC=0
 
 ##### DO NOT EDIT BELOW #################################################################################
@@ -65,12 +65,18 @@ EAP_BRIDGE_5268AC=0
 /usr/sbin/ngctl shutdown vlan0: >/dev/null 2>&1
 /usr/sbin/ngctl shutdown ngeth0: >/dev/null 2>&1
 
+/sbin/kldload -nq netgraph
+/sbin/kldload -nq ng_ether
+/sbin/kldload -nq ng_vlan
+/sbin/kldload -nq ng_eiface
+/sbin/kldload -nq ng_one2many
+
 if [ "$EAP_MODE" = "bridge" ] ; then
   /usr/bin/logger -st "pfatt" "configuring EAP environment for $EAP_MODE mode..."
   /usr/bin/logger -st "pfatt" "cabling should look like this:"
   /usr/bin/logger -st "pfatt" "  ONT---[] [$ONT_IF]$HOST[$EAP_BRIDGE_IF] []---[] [ONT_PORT]ResidentialGateway"
   /usr/bin/logger -st "pfatt" "loading netgraph kernel modules..."
-  /sbin/kldload -nq /conf/pfatt/bin/ng_etf.ko
+  /sbin/kldload -nq ng_etf
   /usr/bin/logger -st "pfatt" "attaching interfaces to ng_ether..."
   /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$ONT_IF');"
   /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$EAP_BRIDGE_IF');"
