@@ -300,7 +300,7 @@ For OPNSense 20.1:
 follow the pfSense instructions, EXCEPT:
 1) use file opnatt.sh
 2) do *NOT* install the ng_etf.ko, as OPNSense already has this module installed.
-3) put the opnatt.sh script into `/usr/local/etc/rc.syshook.d/early` as 99-opnatt.sh
+3) put the opnatt.sh script into `/usr/local/etc/rc.syshook.d/early` as `99-opnatt.sh`
 4) do *NOT* modify config.xml, nor do any of the duid stuff
 5) note: You *CAN* use IPv6 Prefix id 0, as OPNSense does *NOT* assign a routeable IPv6 address to ngeth0
 
