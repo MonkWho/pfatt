@@ -1,8 +1,18 @@
 #!/bin/sh
 
-script_path="/root/bin/pfatt-5268AC.sh"
+# PROVIDE: pfatt_5268AC
+# REQUIRE: LOGIN
 
-name=`/usr/bin/basename "${script_path}"`
+. /etc/rc.subr
+
+name=pfatt_5268AC
+rcvar=pfatt_5268AC_enable
+
+local_rc_config $name
+
+: ${pfatt_5268AC_enable:="NO"}
+
+script_path="/root/bin/pfatt_5268AC.sh"
 
 rc_start() {
     ### Lock out other start signals until we are done
