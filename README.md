@@ -25,7 +25,7 @@ First, let's talk about what happens in the standard setup (without any bypass).
 
 To bypass the gateway using pfSense, we can emulate the standard procedure. If we connect our Residential Gateway and ONT to our pfSense box, we can bridge the 802.1/X authentication sequence, tag our WAN traffic as VLAN0, and request a public IPv4 via DHCP using a spoofed MAC address.
 
-Unfortunately, there are some challenges with emulating this process. First, it's against RFC to bridge 802.1/X traffic and it is not supported. Second, tagging traffic as VLAN0 is not supported through the standard interfaces. 
+Unfortunately, there are some challenges with emulating this process. First, it's against RFC to bridge 802.1/X traffic and it is not supported. Second, tagging traffic as VLAN0 is not supported through the standard interfaces.
 
 This is where netgraph comes in. Netgraph allows you to break some rules and build the proper plumbing to make this work. So, our cabling looks like this:
 
@@ -34,7 +34,7 @@ Residential Gateway
 [ONT Port]
   |
   |
-[nic0] pfSense [nic1] 
+[nic0] pfSense [nic1]
                  |
                  |
                [ONT]
@@ -47,9 +47,9 @@ With netgraph, our procedure looks like this (at a high level):
 1. The packet then is bridged through netgraph to the ONT interface.
 1. If the packet matches an 802.1/X type (which is does), it is passed to the ONT interface. If it does not, the packet is discarded. This prevents our Residential Gateway from initiating DHCP. We want pfSense to handle that.
 1. The ONT should then see and respond to the EAPOL-START, which is passed back through our netgraph back to the residential gateway. At this point, the 802.1/X authentication should be complete.
-1. netgraph has also created an interface for us called `ngeth0`. This interface is connected to `ng_vlan` which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface. 
+1. netgraph has also created an interface for us called `ngeth0`. This interface is connected to `ng_vlan` which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface.
 1. pfSense can then be configured to use `ngeth0` as the WAN interface.
-1. Next, we spoof the MAC address of the residential gateway and request a DHCP lease on `ngeth0`. The packets get tagged as VLAN0 and exit to the ONT. 
+1. Next, we spoof the MAC address of the residential gateway and request a DHCP lease on `ngeth0`. The packets get tagged as VLAN0 and exit to the ONT.
 1. Now the DHCP handshake should complete and we should be on our way!
 
 Hopefully, that now gives you an idea of what we are trying to accomplish. See the comments and commands `bin/pfatt.sh` for details about the netgraph setup.
@@ -102,9 +102,9 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     ```
     It should look like this:
     ![Shellcmd Settings](img/Shellcmd.png)
-    
+
     This can also be acomplished by manually editing your pfSense /conf/config.xml file. Add <earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd> above </system>. This method is not recommended and is frowned upon by pfSense team.
-    
+
 4. Connect cables:
     - `$RG_IF` to Residential Gateway on the ONT port (not the LAN ports!)
     - `$ONT_IF` to ONT (outside)
@@ -128,7 +128,7 @@ This setup assumes you have a fairly recent version of pfSense. I'm using 2.4.5.
 1. Go to _System > Advanced > Networking_
 1. Configure **DHCP6 DUID** to _DUID-EN_
 1. Configure **DUID-EN** to _3561_
-1. Configure your **IANA Private Enterprise Number**. This number is unique for each customer and (I believe) based off your Residential Gateway serial number. You can generate your DUID using [gen-duid.sh](https://github.com/aus/pfatt/blob/master/bin/gen-duid.sh), which just takes a few inputs. Or, you can take a pcap of the Residential Gateway with some DHCPv6 traffic. Then fire up Wireshark and look for the value in _DHCPv6 > Client Identifier > Identifier_. Add the value as colon separated hex values `00:00:00`.
+1. Configure your **IANA Private Enterprise Number**. This number is unique for each customer and (I believe) based off your Residential Gateway serial number. You can generate your DUID using [gen-duid.sh](https://github.com/MonkWho/pfatt/blob/master/bin/gen-duid.sh), which just takes a few inputs. Or, you can take a pcap of the Residential Gateway with some DHCPv6 traffic. Then fire up Wireshark and look for the value in _DHCPv6 > Client Identifier > Identifier_. Add the value as colon separated hex values `00:00:00`.
 1. Save
 
 **WAN Setup**
@@ -195,21 +195,21 @@ tcpdump -ei $ONT_IF port 67 or port 68
 tcpdump -ei ngeth0 port 67 or port 68
 ```
 
-Verify you are seeing 802.1Q (tagged as vlan0) traffic on your `$ONT_IF ` interface and untagged traffic on `ngeth0`. 
+Verify you are seeing 802.1Q (tagged as vlan0) traffic on your `$ONT_IF ` interface and untagged traffic on `ngeth0`.
 
 Verify the DHCP request is firing using the MAC address of your Residential Gateway.
 
 If the VLAN0 traffic is being properly handled, next pfSense will need to request an IP. `ngeth0` needs to DHCP using the authorized MAC address. You should see an untagged DCHP request on `ngeth0` carry over to the `$ONT_IF` interface tagged as VLAN0. Then you should get a DHCP response and you're in business.
 
-If you don't see traffic being bridged between `ngeth0` and `$ONT_IF`, then netgraph is not setup correctly. 
+If you don't see traffic being bridged between `ngeth0` and `$ONT_IF`, then netgraph is not setup correctly.
 
 ## Promiscuous Mode
 
-`pfatt.sh` will put `$RG_IF` in promiscuous mode via `/sbin/ifconfig $RG_IF promisc`. Otherwise, the EAP packets would not bridge. I think this is necessary for everyone but I'm not sure. Turn it off if it's causing issues. 
+`pfatt.sh` will put `$RG_IF` in promiscuous mode via `/sbin/ifconfig $RG_IF promisc`. Otherwise, the EAP packets would not bridge. I think this is necessary for everyone but I'm not sure. Turn it off if it's causing issues.
 
 ## netgraph
 
-The netgraph system provides a uniform and modular system for the implementation of kernel objects which perform various networking functions. If you're unfamiliar with netgraph, this [tutorial](http://www.netbsd.org/gallery/presentations/ast/2012_AsiaBSDCon/Tutorial_NETGRAPH.pdf) is a great introduction. 
+The netgraph system provides a uniform and modular system for the implementation of kernel objects which perform various networking functions. If you're unfamiliar with netgraph, this [tutorial](http://www.netbsd.org/gallery/presentations/ast/2012_AsiaBSDCon/Tutorial_NETGRAPH.pdf) is a great introduction.
 
 Your netgraph should look something like this:
 
@@ -277,7 +277,7 @@ This setup has been tested on physical servers and virtual machines. Virtualizat
 
 Proxmox uses a bridged networking model, and thus utilizes Linux's native bridge capability. To use this netgraph method, you do a PCI passthrough for the `$RG_IF` and `$ONT_IF` NICs. The bypass procedure should then be the same.
 
-You can also solve the EAP/802.1X and VLAN0/802.1Q problem by setting the `group_fwd_mask` and creating a vlan0 interface to bridge to your VM. See *Other Methods* below. 
+You can also solve the EAP/802.1X and VLAN0/802.1Q problem by setting the `group_fwd_mask` and creating a vlan0 interface to bridge to your VM. See *Other Methods* below.
 
 ## ESXi
 
@@ -293,7 +293,7 @@ If you're looking how to do this on a Linux-based router, please refer to [this 
 
 There is a whole thread on this at [DSLreports](http://www.dslreports.com/forum/r29903721-AT-T-Residential-Gateway-Bypass-True-bridge-mode). The gist of this method is that you connect your ONT, RG and WAN to a switch. Create two VLANs. Assign the ONT and RG to VLAN1 and the WAN to VLAN2. Let the RG authenticate, then change the ONT VLAN to VLAN2. The WAN the DHCPs and your in business.
 
-However, I don't think this works for everyone. I had to explicitly tag my WAN traffic to VLAN0 which wasn't supported on my switch. 
+However, I don't think this works for everyone. I had to explicitly tag my WAN traffic to VLAN0 which wasn't supported on my switch.
 
 ## OPNSense / FreeBSD
 For OPNSense 20.1:

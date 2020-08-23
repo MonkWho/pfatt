@@ -6,7 +6,7 @@ printhexstring() { awk '{l=split($0,c,"");for(i=1;i<l-1;i=i+2)printf("%s:",subst
 echo
 echo "Step 1) RG information"
 echo
-while read -p "  Manufacturer [1=Pace, 2=Motorola]: " mfg; do
+while read -p "  Manufacturer [1=Pace, 2=Motorola/Arris]: " mfg; do
         ([ "$mfg" = "1" ] || [ "$mfg" = "2" ]) && break
 done
 while read -p "  Serial number: " serial; do [ -n "$serial" ] && break; done
