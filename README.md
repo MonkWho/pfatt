@@ -157,7 +157,7 @@ If you have additional LAN interfaces repeat these steps for each interface exce
 1. Enable DHCPv6 server on interface LAN
 1. Configure a range of ::0001 to ::ffff:ffff:ffff:fffe
 1. Leave **Prefix Delegation Range** _blank_.
-1. Configure a **Prefix Delegation Size** to _64_
+1. Configure **Prefix Delegation Size** to _64_
 1. Save
 1. Go to the _Router Advertisements_ tab
 1. Configure **Router mode** as _Stateless DHCP_
