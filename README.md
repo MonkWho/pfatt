@@ -136,6 +136,7 @@ This setup assumes you have a fairly recent version of pfSense. I'm using 2.4.5.
 1. Go to _Interfaces > WAN_
 1. Enable **IPv6 Configuration Type** as _DHCP6_
 1. Scroll to _DCHP6 Client Configuration_
+1. Enable **Request only an IPv6 prefix**
 1. Enable **DHCPv6 Prefix Delegation size** as _60_
 1. Enable _Send IPv6 prefix hint_
 1. Enable _Do not wait for a RA_
