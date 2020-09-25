@@ -138,6 +138,7 @@ This setup assumes you have a fairly recent version of pfSense. I'm using 2.4.5.
 1. Go to _Interfaces > WAN_
 1. Enable **IPv6 Configuration Type** as _DHCP6_
 1. Scroll to _DCHP6 Client Configuration_
+1. Enable **Request only an IPv6 prefix**
 1. Enable **DHCPv6 Prefix Delegation size** as _60_
 1. Enable _Send IPv6 prefix hint_
 1. Enable _Do not wait for a RA_
@@ -158,11 +159,14 @@ If you have additional LAN interfaces repeat these steps for each interface exce
 1. Go to _Services > DHCPv6 Server & RA_
 1. Enable DHCPv6 server on interface LAN
 1. Configure a range of ::0001 to ::ffff:ffff:ffff:fffe
-1. Configure a **Prefix Delegation Range** to _64_
+1. Leave **Prefix Delegation Range** _blank_.
+1. Configure **Prefix Delegation Size** to _64_
 1. Save
 1. Go to the _Router Advertisements_ tab
 1. Configure **Router mode** as _Stateless DHCP_
 1. Save
+
+If you have additional LAN interfaces repeat these steps for each interface.
 
 That's it! Now your clients should be receiving public IPv6 addresses via DHCP6.
 
