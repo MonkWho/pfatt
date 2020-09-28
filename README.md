@@ -179,7 +179,7 @@ Choose which Method is the best for you.
 1. In the Alias IPv4 address box enter the RG IP (One past your last IP)
   Example: if you have `34.22.45.10/29` the RG IP would be one past your last
   IP `(34.22.45.15)` so it would be `(34.22.45.16)`.
-(1. ) Navigate to _Firewall > NAT > 1:1._
+- Navigate to _Firewall > NAT > 1:1._
 - Create a new 1:1 NAT rule with the following values.
   _Interface: WAN_
 - External Network: your desired usable static IP
