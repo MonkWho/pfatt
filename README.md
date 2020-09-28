@@ -176,16 +176,16 @@ Choose which Method is the best for you.
 1:1 Nat:
 
 1. Navigate to Interfaces > WAN and scroll down to Alias IPv4 address.
-2. In the Alias IPv4 address box enter the RG IP (One past your last IP)
+1. In the Alias IPv4 address box enter the RG IP (One past your last IP)
   Example: if you have 34.22.45.10/29 the RG IP would be one past your last
   IP (34.22.45.15) so it would be (34.22.45.16).
-3. Navigate to Firewall > NAT > 1:1.
-4. Create a new 1:1 NAT rule with the following values.
-  1. Interface: WAN
-  1. External Network: your desired usable static IP
-  1. Internal IP: (Single Host or Network) IP of the LAN host or network that
+1. Navigate to Firewall > NAT > 1:1.
+1. Create a new 1:1 NAT rule with the following values.
+  2. Interface: WAN
+  2. External Network: your desired usable static IP
+  2. Internal IP: (Single Host or Network) IP of the LAN host or network that
   you want to have the static IP.
-  1. Make sure you set the submask accordingly (single devices use /32) a /32
+  2. Make sure you set the submask accordingly (single devices use /32) a /32
   only gives you one address.
 
 # Troubleshooting
