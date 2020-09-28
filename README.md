@@ -174,6 +174,7 @@ That's it! Now your clients should be receiving public IPv6 addresses via DHCP6.
 Choose which Method is the best for you.
 
 1:1 Nat:
+
 1. Navigate to Interfaces > WAN and scroll down to Alias IPv4 address.
 2. In the Alias IPv4 address box enter the RG IP (One past your last IP)
   Example: if you have 34.22.45.10/29 the RG IP would be one past your last
@@ -186,7 +187,7 @@ Choose which Method is the best for you.
   you want to have the static IP.
   4. Make sure you set the submask accordingly (single devices use /32) a /32
   only gives you one address.
-  
+
 # Troubleshooting
 
 ## Logging
