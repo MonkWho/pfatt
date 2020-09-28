@@ -187,8 +187,8 @@ Choose which Method is the best for you.
   you want to have the static IP.
     2. Make sure you set the submask accordingly (single devices use /32) a /32
   only gives you one address.
-## Completely Bypassing the NAT and giving the device the static IP ##
-
+## ~~Completely Bypassing the NAT and giving the device the static IP:~~ ##
+### In Progress ###
 # Troubleshooting
 
 ## Logging
