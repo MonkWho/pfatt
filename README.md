@@ -179,7 +179,7 @@ Choose which Method is the best for you.
 1. In the _Alias IPv4 address box_ enter the RG IP (One past your last IP)
   Example: if you have `34.22.45.10/29` the RG IP would be one past your last
   IP `(34.22.45.15)` so it would be `(34.22.45.16)`.
-    1. Navigate to _Firewall > NAT > 1:1._
+  1. Navigate to _Firewall > NAT > 1:1._
       1. Create a new 1:1 NAT rule with the following values.
   _Interface: WAN_
       2. _External Network:_ your desired usable static IP
@@ -187,7 +187,7 @@ Choose which Method is the best for you.
   you want to have the static IP.
     2. Make sure you set the submask accordingly (single devices use /32) a /32
   only gives you one address.
-  
+
 # Troubleshooting
 
 ## Logging
