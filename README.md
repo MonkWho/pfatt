@@ -170,6 +170,23 @@ If you have additional LAN interfaces repeat these steps for each interface.
 
 That's it! Now your clients should be receiving public IPv6 addresses via DHCP6.
 
+# Static IP block configuration
+Choose which Method is the best for you.
+
+1:1 Nat:
+1. Navigate to Interfaces > WAN and scroll down to Alias IPv4 address.
+2. In the Alias IPv4 address box enter the RG IP (One past your last IP)
+  Example: if you have 34.22.45.10/29 the RG IP would be one past your last
+  IP (34.22.45.15) so it would be (34.22.45.16).
+3. Navigate to Firewall > NAT > 1:1.
+4. Create a new 1:1 NAT rule with the following values.
+  1. Interface: WAN
+  2. External Network: your desired usable static IP
+  3. Internal IP: (Single Host or Network) IP of the LAN host or network that
+  you want to have the static IP.
+  4. Make sure you set the submask accordingly (single devices use /32) a /32
+  only gives you one address.
+  
 # Troubleshooting
 
 ## Logging
