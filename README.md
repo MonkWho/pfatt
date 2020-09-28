@@ -181,11 +181,11 @@ Choose which Method is the best for you.
   IP (34.22.45.15) so it would be (34.22.45.16).
 3. Navigate to Firewall > NAT > 1:1.
 4. Create a new 1:1 NAT rule with the following values.
-  a. Interface: WAN
-  b. External Network: your desired usable static IP
-  c. Internal IP: (Single Host or Network) IP of the LAN host or network that
+  1. Interface: WAN
+  1. External Network: your desired usable static IP
+  1. Internal IP: (Single Host or Network) IP of the LAN host or network that
   you want to have the static IP.
-  d. Make sure you set the submask accordingly (single devices use /32) a /32
+  1. Make sure you set the submask accordingly (single devices use /32) a /32
   only gives you one address.
 
 # Troubleshooting
