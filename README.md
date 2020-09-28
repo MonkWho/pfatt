@@ -180,12 +180,12 @@ Choose which Method is the best for you.
   Example: if you have `34.22.45.10/29` the RG IP would be one past your last
   IP `(34.22.45.15)` so it would be `(34.22.45.16)`.
 1. Navigate to _Firewall > NAT > 1:1._
-  - Create a new 1:1 NAT rule with the following values.
+  2. Create a new 1:1 NAT rule with the following values.
   _Interface: WAN_
-  - External Network: your desired usable static IP
-  - Internal IP: (Single Host or Network) IP of the LAN host or network that
+  3. _External Network:_ your desired usable static IP
+  4. _Internal IP:_ (Single Host or Network) IP of the LAN host or network that
   you want to have the static IP.
-  - Make sure you set the submask accordingly (single devices use /32) a /32
+  5. Make sure you set the submask accordingly (single devices use /32) a /32
   only gives you one address.
 
 # Troubleshooting
