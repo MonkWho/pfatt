@@ -188,7 +188,7 @@ Choose which Method is the best for you.
     2. Make sure you set the submask accordingly (single devices use /32) a /32
   only gives you one address.
 ## ~~Completely Bypassing the NAT and giving the device the static IP:~~ ##
-*** Should only be used if you know what you are doing ***
+__Should only be used if you know what you are doing__
 1. **If you pfsense has multiple interfaces:**
 
 ### In Progress ###
