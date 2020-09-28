@@ -187,6 +187,10 @@ Choose which Method is the best for you.
   you want to have the static IP.
   5. Make sure you set the submask accordingly (single devices use /32) a /32
   only gives you one address.
+          1. A numbered list
+              1. A nested numbered list
+              2. Which is numbered
+          2. Which is numbered
 
 # Troubleshooting
 
