@@ -173,7 +173,7 @@ That's it! Now your clients should be receiving public IPv6 addresses via DHCP6.
 # Static IP block configuration
 Choose which Method is the best for you.
 
-1:1 Nat:
+## 1:1 Nat: ##
 
 1. Navigate to _Interfaces > WAN_ and scroll down to Alias IPv4 address.
 1. In the _Alias IPv4 address box_ enter the RG IP (One past your last IP)
@@ -187,6 +187,7 @@ Choose which Method is the best for you.
   you want to have the static IP.
     2. Make sure you set the submask accordingly (single devices use /32) a /32
   only gives you one address.
+## Completely Bypassing the NAT and giving the device the static IP ##
 
 # Troubleshooting
 
