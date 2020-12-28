@@ -4,8 +4,6 @@ This repository includes my notes on enabling a true bridge mode setup with AT&T
 
 There are a few other methods to accomplish true bridge mode, so be sure to see what easiest for you. True Bridge Mode is also possible in a Linux via ebtables or using hardware with a VLAN swap trick. For me, I was not using a Linux-based router and the VLAN swap did not seem to work for me.
 
-While many AT&T residential gateways offer something called _IP Passthrough_, it does not provide the same advantages of a true bridge mode. For example, the NAT table is still managed by the gateway, which is limited to a measly 8192 sessions (although it becomes unstable at even 60% capacity).
-
 The netgraph method will allow you to fully utilize your own router and fully bypass your residential gateway. It survives reboots, re-authentications, IPv6, and new DHCP leases.
 
 # How it Works
@@ -23,56 +21,34 @@ First, let's talk about what happens in the standard setup (without any bypass).
 
 ## Bypass Procedure
 
-To bypass the gateway using pfSense, we can emulate the standard procedure. If we connect our Residential Gateway and ONT to our pfSense box, we can bridge the 802.1/X authentication sequence, tag our WAN traffic as VLAN0, and request a public IPv4 via DHCP using a spoofed MAC address.
+### Supplicant Method
+If you have valid certs that have been extracted from an authorized residential gateway device, you can utilize the native wpa_supplicant client in pfSense to perform 802.1X EAP-TLS authentication.
 
-Unfortunately, there are some challenges with emulating this process. First, it's against RFC to bridge 802.1/X traffic and it is not supported. Second, tagging traffic as VLAN0 is not supported through the standard interfaces.
+I will also note that EAP-TLS authentication authorizes the device, not the subscriber. Meaning, any authorized device (NVG589, NVG599, 5268AC, BGW210, etc) can be used to authorize the link. It does not have to match the RG assigned to your account. For example, an NVG589 purchased of eBay can authorize the link. The subscriber's service is authorized separately (probably by the DHCP MAC and/or ONT serial number).
 
-This is where netgraph comes in. Netgraph allows you to break some rules and build the proper plumbing to make this work. So, our cabling looks like this:
+In supplicant mode, the residential gateway can be permanently disconnected. We will still use netgraph to tag our traffic with VLAN0. Our cabling then looks pretty simple:
 
-```
-Residential Gateway
-[ONT Port]
-  |
-  |
-[nic0] pfSense [nic1]
-                 |
-                 |
-               [ONT]
-              Outside
-```
+   ```
+  Outside[ONT]---[nic0]pfsense
+   ```
+With netgraph, the procedure also looks a little simpler:
 
-With netgraph, our procedure looks like this (at a high level):
-
-1. The Residential Gateway initiates a 802.1/X EAPOL-START.
-1. The packet then is bridged through netgraph to the ONT interface.
-1. If the packet matches an 802.1/X type (which is does), it is passed to the ONT interface. If it does not, the packet is discarded. This prevents our Residential Gateway from initiating DHCP. We want pfSense to handle that.
-1. The ONT should then see and respond to the EAPOL-START, which is passed back through our netgraph back to the residential gateway. At this point, the 802.1/X authentication should be complete.
-1. netgraph has also created an interface for us called `ngeth0`. This interface is connected to `ng_vlan` which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface.
-1. pfSense can then be configured to use `ngeth0` as the WAN interface.
-1. Next, we spoof the MAC address of the residential gateway and request a DHCP lease on `ngeth0`. The packets get tagged as VLAN0 and exit to the ONT.
-1. Now the DHCP handshake should complete and we should be on our way!
-
-Hopefully, that now gives you an idea of what we are trying to accomplish. See the comments and commands `bin/pfatt.sh` for details about the netgraph setup.
+netgraph has created an interface for us called ngeth0. This interface is connected to ng_vlan which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface.
+wpa_supplicant binds to ngeth0 and initiates 802.1X EAP-TLS authentication
+pfSense can then be configured to use ngeth0 as the WAN interface.
+Next, we spoof the MAC address of the residential gateway and request a DHCP lease on ngeth0. The packets get tagged as VLAN0 and exit to the ONT.
+Now the DHCP handshake should complete and we should be on our way!
+Hopefully, that now gives you an idea of what we are trying to accomplish. See the comments and commands bin/pfatt.sh for details about the netgraph setup.
 
 But enough talk. Now for the fun part!
 
-# Setup
-
 ## Prerequisites
 
-* At least __three__ physical network interfaces on your pfSense server
-* The MAC address of your Residential Gateway
 * Local or console access to pfSense
-* pfSense 2.4.5 running on amd64 architecture _(If you are running pfSense 2.4.4 please see instruction in the [Before-pfSense-2.4.5 branch](https://github.com/MonkWho/pfatt/blob/Before-pfSense-2.4.5/README.md))_
-
-At this time there is a bug in pFsense 2.4.5 and [ng_etf module is only included in pFsense 2.4.5 _amd64 build_](
-https://redmine.pfsense.org/issues/10463). Should be fixed in 2.4.5-p1.
-
-PFSense Builds for Netgate hardware may not include ng_etf (Confimred on SG4860-Desktop 2.4.5-p1). Confirm ng_etf exists before continuing and look at [Before-pfSense-2.4.5 branch](https://github.com/MonkWho/pfatt/blob/Before-pfSense-2.4.5/README.md) for gudiance if it doesn't exist.
-
-If you are running pfSense on anything other than amd64 architecture you should compile your own version of ng_etf. Look at [Before-pfSense-2.4.5 branch](https://github.com/MonkWho/pfatt/blob/Before-pfSense-2.4.5/README.md) for some guidance on compiling and running your own ng_etf.
-
-If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](https://www.amazon.com/gp/product/B00007IFED) as your third. It has the Asix AX88772 chipset, which is supported in FreeBSD with the [axe](https://www.freebsd.org/cgi/man.cgi?query=axe&sektion=4) driver. I've confirmed it works in my setup. The driver was already loaded and I didn't have to install or configure anything to get it working. Also, don't worry about the poor performance of USB or 100Mbps NICs. This third NIC will only send/recieve a few packets periodicaly to authenticate your Router Gateway. The rest of your traffic will utilize your other (and much faster) NICs.
+* pfSense 2.4.5 running on amd64 architecture
+* Two physical network interfaces on your pfSense server
+* The MAC address of your EAP-TLS Identity (which is the same as your residential gateway if you are using its certificates)
+* Valid certificates to perform EAP-TLS authentication (see Extracting Certificates)
 
 ## Install
 
@@ -89,15 +65,19 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
     scp bin/pfatt.sh root@pfsense:/root/bin/
     ssh root@pfsense chmod +x /root/bin/pfatt.sh
     ```
-
-    **NOTE:** If you have the 5268AC, you'll also need to install `pfatt-5268AC-startup.sh` and `pfatt-5268.sh`. The scripts monitor your connection and disable or enable the EAP bridging as needed. It's a hacky workaround, but it enables you to keep your 5268AC connected, avoid EAP-Logoffs and survive reboots. Consider changing the `PING_HOST` in `pfatt-5268AC.sh` to a reliable host. Then perform these additional steps to install:
-    ```
-    scp bin/pfatt-5268AC-startup.sh root@pfsense:/usr/local/etc/rc.d/pfatt-5268AC-startup.sh
-    scp bin/pfatt-5268AC.sh root@pfsense:/root/bin/
-    ssh root@pfsense chmod +x /usr/local/etc/rc.d/pfatt-5268AC-startup.sh /root/bin/pfatt-5268AC.sh
-    ```
-
-3. To start pfatt.sh script at the beginning of the boot process pfSense team recomments you use a package called shellcmd. Use pfSense package installer to find and install it. Once you have shellcmd package installed you can find it in Services > Shellcmd. Now add a new command and fill it up accordingly (make sure to select earlyshellcmd from a dropdown):
+    
+3. Upload your extracted certs (see Extracting Certificates) to /conf/pfatt/wpa. You should have three files in the wpa directory as such. You may also need to match the permissions.
+      ```
+      [2.4.4-RELEASE][root@pfsense.knox.lan]/conf/pfatt/wpa: ls -al
+      total 19
+      drwxr-xr-x  2 root  wheel     5 Jan 10 16:32 .
+      drwxr-xr-x  4 root  wheel     5 Jan 10 16:33 ..
+      -rw-------  1 root  wheel  5150 Jan 10 16:32 ca.pem
+      -rw-------  1 root  wheel  1123 Jan 10 16:32 client.pem
+      -rw-------  1 root  wheel   887 Jan 10 16:32 private.pem
+      ```
+    
+4. To start pfatt.sh script at the beginning of the boot process pfSense team recomments you use a package called shellcmd. Use pfSense package installer to find and install it. Once you have shellcmd package installed you can find it in Services > Shellcmd. Now add a new command and fill it up accordingly (make sure to select earlyshellcmd from a dropdown):
     ```
     Command: /root/bin/pfatt.sh
     Shellcmd Type: earlyshellcmd
@@ -107,15 +87,14 @@ If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](
 
     This can also be acomplished by manually editing your pfSense /conf/config.xml file. Add <earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd> above </system>. This method is not recommended and is frowned upon by pfSense team.
 
-4. Connect cables:
-    - `$RG_IF` to Residential Gateway on the ONT port (not the LAN ports!)
+5. Connect cables:
     - `$ONT_IF` to ONT (outside)
     - `LAN NIC` to local switch (as normal)
 
-5. Prepare for console access.
-6. Reboot.
-7. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not normally change. However, if you moved or re-purposed your LAN interface for this setup, you'll need to re-apply any existing configuration (like your VLANs) to your new LAN interface. pfSense does not need to manage `$RG_IF` or `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
-8. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
+6. Prepare for console access.
+7. Reboot.
+8. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not normally change. However, if you moved or re-purposed your LAN interface for this setup, you'll need to re-apply any existing configuration (like your VLANs) to your new LAN interface. pfSense does not need to manage `$RG_IF` or `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
+9. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
 
 If everything is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, tagging the WAN traffic with VLAN0, and your WAN interface configured with an IPv4 address via DHCP.
 
