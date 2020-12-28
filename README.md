@@ -291,10 +291,6 @@ follow the pfSense instructions, EXCEPT:
 
 I haven't tried this with native FreeBSD, but I imagine the process is ultimately the same with netgraph. Feel free to submit a PR with notes on your experience.
 
-# U-verse TV
-
-See [U-VERSE_TV.md](U-VERSE_TV.md)
-
 # References
 
 - http://blog.0xpebbles.org/Bypassing-At-t-U-verse-hardware-NAT-table-limits
