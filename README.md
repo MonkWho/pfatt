@@ -2,7 +2,7 @@
 
 This repository allows bypassing the AT&T U-Verse fiber gateway using pfSense. This method utilizes [netgraph](https://www.freebsd.org/cgi/man.cgi?netgraph) which is a graph-based kernel networking subsystem of FreeBSD. This low-level solution was required to account for the unique issues surrounding bridging 802.1X traffic and tagging a VLAN with an id of 0. I've tested and confirmed this setup works with AT&T U-Verse Internet on the BGW210-700 residential gateway. It probably works with others too.
 
-The netgraph method will allow you to fully utilize your own router and fully bypass your residential gateway. It survives reboots, re-authentications, IPv6, and new DHCP leases.
+The netgraph method will allow you to fully utilize your own router and fully bypass your residential gateway. It survives reboots, re-authentications, IPv6 and new DHCP leases.
 
 # How it Works
 
@@ -17,35 +17,31 @@ First, let's talk about what happens in the standard setup (without any bypass).
 3. Once traffic is tagged with VLAN0, your residential gateway needs to request a public IPv4 address via DHCP. The MAC address in the DHCP request needs to match that of the MAC address that's assigned to your AT&T account. Other than that, there's nothing special about the DCHPv4 handshake.
 4. After the DHCP lease is issued, the WAN setup is complete. Your LAN traffic is then NAT'd and routed to the outside.
 
-## Bypass Procedure
+## Bypass Procedure: Supplicant Method
 
-### Supplicant Method
+### Notes
+
 If you have valid certs that have been extracted from an authorized residential gateway device, you can utilize the native wpa_supplicant client in pfSense to perform 802.1X EAP-TLS authentication.
 
-I will also note that EAP-TLS authentication authorizes the device, not the subscriber. Meaning, any authorized device (NVG589, NVG599, 5268AC, BGW210, etc) can be used to authorize the link. It does not have to match the RG assigned to your account. For example, an NVG589 purchased of eBay can authorize the link. The subscriber's service is authorized separately (probably by the DHCP MAC and/or ONT serial number).
+Note that EAP-TLS authentication authorizes the device, not the subscriber. Meaning, any authorized device (BGW210) can be used to authorize the link. It does not have to match the residential gateway assigned to your account. For example, a BGW210 purchased of eBay can authorize the link. The subscriber's service is authorized separately (probably by the DHCP MAC and/or ONT serial number).
 
-In supplicant mode, the residential gateway can be permanently disconnected. We will still use netgraph to tag our traffic with VLAN0. Our cabling then looks pretty simple:
+In supplicant mode, the residential gateway can be permanently disconnected. We will use netgraph to tag our traffic with VLAN0 and spoof the MAC address from the residential gateway.
 
-   ```
-  Outside[ONT]---[nic0]pfsense
-   ```
-With netgraph, the procedure also looks a little simpler:
+### Bypass Procedure
 
-netgraph has created an interface for us called ngeth0. This interface is connected to ng_vlan which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface.
+Netgraph creates an interface for us called ngeth0. This interface is connected to vlan0 which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface.
 wpa_supplicant binds to ngeth0 and initiates 802.1X EAP-TLS authentication
 pfSense can then be configured to use ngeth0 as the WAN interface.
 Next, we spoof the MAC address of the residential gateway and request a DHCP lease on ngeth0. The packets get tagged as VLAN0 and exit to the ONT.
 Now the DHCP handshake should complete and we should be on our way!
-Hopefully, that now gives you an idea of what we are trying to accomplish. See the comments and commands bin/pfatt.sh for details about the netgraph setup.
-
-But enough talk. Now for the fun part!
+See the comments and commands bin/pfatt.sh for details about the netgraph setup.
 
 ## Prerequisites
 
 * Local or console access to pfSense
 * pfSense 2.4.5 running on amd64 architecture
 * Two physical network interfaces on your pfSense server
-* The MAC address of your EAP-TLS Identity (which is the same as your residential gateway if you are using its certificates)
+* The MAC address of your EAP-TLS Identity (from residential gateway used for certificates)
 * Valid certificates to perform EAP-TLS authentication (see Extracting Certificates)
 
 ## Install
@@ -53,7 +49,6 @@ But enough talk. Now for the fun part!
 1. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device. In my environment, it's:
     ```shell
     ONT_IF='xx0' # NIC -> ONT / Outside
-    RG_IF='xx1'  # NIC -> Residential Gateway's ONT port
     RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx' # MAC address of Residential Gateway
     ```
 
