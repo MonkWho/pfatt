@@ -29,11 +29,12 @@ In supplicant mode, the residential gateway can be permanently disconnected. We 
 
 ### Bypass Procedure
 
-Netgraph creates an interface for us called ngeth0. This interface is connected to vlan0 which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface.
-wpa_supplicant binds to ngeth0 and initiates 802.1X EAP-TLS authentication
-pfSense can then be configured to use ngeth0 as the WAN interface.
-Next, we spoof the MAC address of the residential gateway and request a DHCP lease on ngeth0. The packets get tagged as VLAN0 and exit to the ONT.
-Now the DHCP handshake should complete and we should be on our way!
+1. Netgraph creates an interface for us called ngeth0. This interface is connected to vlan0 which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface.
+2. wpa_supplicant binds to ngeth0 and initiates 802.1X EAP-TLS authentication
+3. pfSense can then be configured to use ngeth0 as the WAN interface.
+4. Spoof the MAC address of the residential gateway and request a DHCP lease on ngeth0. The packets get tagged as VLAN0 and exit to the ONT.
+5. Now the DHCP handshake should complete and we should be on our way!
+
 See the comments and commands bin/pfatt.sh for details about the netgraph setup.
 
 ## Prerequisites
