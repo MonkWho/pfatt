@@ -96,7 +96,7 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
 
 7. Prepare for console access.
 8. Reboot.
-9. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not normally change. However, if you moved or re-purposed your LAN interface for this setup, you'll need to re-apply any existing configuration (like your VLANs) to your new LAN interface. pfSense does not need to manage `$RG_IF` or `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
+9. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not normally change. However, if you moved or re-purposed your LAN interface for this setup, you'll need to re-apply any existing configuration (like your VLANs) to your new LAN interface. pfSense does not need to manage `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
 10. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
 
 If everything is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, tagging the WAN traffic with VLAN0, and your WAN interface configured with an IPv4 address via DHCP.
@@ -160,22 +160,11 @@ Output from `pfatt.sh` and `pfatt-5268AC.sh` can be found in `/var/log/pfatt.log
 
 ## tcpdump
 
-Use tcpdump to watch the authentication, vlan and dhcp bypass process (see above). Run tcpdumps on the `$ONT_IF` interface and the `$RG_IF` interface:
+Use tcpdump to watch the authentication, vlan and dhcp bypass process (see above). Run tcpdumps on the `$ONT_IF` interface:
 ```
 tcpdump -ei $ONT_IF
-tcpdump -ei $RG_IF
 ```
-
-Restart your Residential Gateway. From the `$RG_IF` interface, you should see some EAPOL starts like this:
-```
-MAC (oui Unknown) > MAC (oui Unknown), ethertype EAPOL (0x888e), length 60: POL start
-```
-
-If you don't see these, make sure you're connected to the ONT port.
-
-These packets come every so often. I think the RG does some backoff / delay if doesn't immediately auth correctly. You can always reboot your RG to initiate the authentication again.
-
-If your netgraph is setup correctly, the EAP start packet from the `$RG_IF` will be bridged onto your `$ONT_IF` interface. Then you should see some more EAP packets from the `$ONT_IF` interface and `$RG_IF` interface as they negotiate 802.1/X EAP authentication.
+You should see some more EAP packets from the `$ONT_IF` interface as it negotiates 802.1/X EAP authentication.
 
 Once that completes, watch `$ONT_IF` and `ngeth0` for DHCP traffic.
 ```
