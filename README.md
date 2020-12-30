@@ -60,7 +60,7 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
     ssh root@pfsense chmod +x /root/bin/pfatt.sh
     ```
 
-3. Extracting Certificates: 
+3. Extracting Certificates:
 Certificates can be extracted by the exploitation of the residential gateway to get a root shell. Here are instructions to do so with windows by [iwleonards](https://github.com/iwleonards/extract-mfg).
 
 Be careful, you have sole responsibility for not bricking your residential gateway.
