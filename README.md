@@ -193,7 +193,7 @@ If you don't see traffic being bridged between `ngeth0` and `$ONT_IF`, then netg
 
 ## Promiscuous Mode
 
-`pfatt.sh` will put `$RG_IF` in promiscuous mode via `/sbin/ifconfig $RG_IF promisc`. Otherwise, the EAP packets would not bridge. I think this is necessary for everyone but I'm not sure. Turn it off if it's causing issues.
+`pfatt.sh` will put `$ONT_IF` in promiscuous mode via `/sbin/ifconfig $ONT_IF promisc`. I think this is necessary for everyone but I'm not sure. Turn it off if it's causing issues.
 
 ## netgraph
 
@@ -202,8 +202,6 @@ The netgraph system provides a uniform and modular system for the implementation
 Your netgraph should look something like this:
 
 ![netgraph](img/netgraph.png)
-
-In this setup, the `ue0` interface is my `$RG_IF` and the `bce0` interface is my `$ONT_IF`. You can generate your own graphviz via `ngctl dot`. Copy the output and paste it at [webgraphviz.com](http://www.webgraphviz.com/).
 
 Try these commands to inspect whether netgraph is configured properly.
 
@@ -218,48 +216,28 @@ Try these commands to inspect whether netgraph is configured properly.
 2. Issue `ngctl list` to list netgraph nodes. Inspect `pfatt.sh` to verify the netgraph output matches the configuration in the script. It should look similar to this:
 ```
 $ ngctl list
-There are 9 total nodes:
-  Name: o2m             Type: one2many        ID: 000000a0   Num hooks: 3
+There are 5 total nodes:
   Name: vlan0           Type: vlan            ID: 000000a3   Num hooks: 2
   Name: ngeth0          Type: eiface          ID: 000000a6   Num hooks: 1
   Name: <unnamed>       Type: socket          ID: 00000006   Num hooks: 0
   Name: ngctl28740      Type: socket          ID: 000000ca   Num hooks: 0
-  Name: waneapfilter    Type: etf             ID: 000000aa   Num hooks: 2
-  Name: laneapfilter    Type: etf             ID: 000000ae   Num hooks: 3
   Name: bce0            Type: ether           ID: 0000006e   Num hooks: 1
-  Name: ue0             Type: ether           ID: 00000016   Num hooks: 2
 ```
-3. Inspect the various nodes and hooks. Example for `ue0`:
-```
-$ ngctl show ue0:
-  Name: ue0             Type: ether           ID: 00000016   Num hooks: 2
-  Local hook      Peer name       Peer type    Peer ID         Peer hook
-  ----------      ---------       ---------    -------         ---------
-  upper           laneapfilter    etf          000000ae        nomatch
-  lower           laneapfilter    etf          000000ae        downstream
-```
+3. Inspect the various nodes and hooks.
 
 ### Reset netgraph
 
 `pfatt.sh` expects a clean netgraph before it can be ran. To reset a broken netgraph state, try this:
 
 ```shell
-/usr/sbin/ngctl shutdown waneapfilter:
-/usr/sbin/ngctl shutdown laneapfilter:
 /usr/sbin/ngctl shutdown $ONT_IF:
-/usr/sbin/ngctl shutdown $RG_IF:
-/usr/sbin/ngctl shutdown o2m:
 /usr/sbin/ngctl shutdown vlan0:
 /usr/sbin/ngctl shutdown ngeth0:
 ```
 
 ## pfSense
 
-In some circumstances, pfSense may alter your netgraph. This is especially true if pfSense manages either your `$RG_IF` or `$ONT_IF`. If you make some interface changes and your connection breaks, check to see if your netgraph was changed.
-
-# References
-
-- [MonkWho](https://github.com/MonkWho/pfatt) - Many references on his page
+In some circumstances, pfSense may alter your netgraph. This is especially true if pfSense manages either your `$ONT_IF`. If you make some interface changes and your connection breaks, check to see if your netgraph was changed.
 
 # Credits
 
