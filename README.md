@@ -93,13 +93,13 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
 If everything is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, tagging the WAN traffic with VLAN0, and your WAN interface configured with an IPv4 address via DHCP.
 
 ## Extracting Certificates
-Certificates can be extracted by the exploitation of the residential gateway to get a root shell. Here is a good way to do it using windows: https://github.com/iwleonards/extract-mfg
+Certificates can be extracted by the exploitation of the residential gateway to get a root shell. Here are instructions to do so with windows by [iwleonards](https://github.com/iwleonards/extract-mfg).
 
-References
+Be careful, you have sole responsibility for not bricking your residential gateway.
 
-https://www.devicelocksmith.com/2018/12/eap-tls-credentials-decoder-for-nvg-and.html
-https://www.nomotion.net/blog/sharknatto/
-https://github.com/MakiseKurisu/NVG589/wiki
+In case they are needed, here are firmware archives:
+[1.0.29 Firmware](https://mega.nz/file/35lBkbzC#MTrKdt57SEuz81Tn3MBKm-o_s1zv643MLmxyKILjsk8)
+[Firmware archive](https://drive.google.com/file/d/1AcP3gbjpZOsnGTFApQOlalLzpjidUDj4/view?usp=drivesdk)
 
 # IPv6 Setup
 
@@ -265,3 +265,4 @@ In some circumstances, pfSense may alter your netgraph. This is especially true 
 
 - [MonkWho](https://github.com/MonkWho/pfatt) - For the code that was forked. Other credits on his page
 - [aus](https://github.com/aus) - 31m9ujhbsRRZs4S64njEkw8ksFSTTDcsRU - For the original work
+- [iwleonards](https://github.com/iwleonards/extract-mfg) - Residential gateway certificate extraction
