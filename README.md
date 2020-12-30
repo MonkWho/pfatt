@@ -51,6 +51,9 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
     ```shell
     ONT_IF='xx0' # NIC -> ONT / Outside
     RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx' # MAC address of Residential Gateway
+    CA_PEM='insert filename.pem' # File name of gateway certificate
+    CLIENT_PEM='insert filename.pem' # File name of gateway certificate
+    PRIVATE_PEM='insert filename.pem' # File name of gateway certificate
     ```
 
 2. Copy `bin/pfatt.sh` to `/root/bin` (or any directory) and make executable:
