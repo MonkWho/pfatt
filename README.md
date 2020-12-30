@@ -59,8 +59,17 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
     scp bin/pfatt.sh root@pfsense:/root/bin/
     ssh root@pfsense chmod +x /root/bin/pfatt.sh
     ```
-    
-3. Upload your extracted certs (see Extracting Certificates) to /conf/pfatt/wpa. You should have three files in the wpa directory as such. You may also need to match the permissions.
+
+3. Extracting Certificates: 
+Certificates can be extracted by the exploitation of the residential gateway to get a root shell. Here are instructions to do so with windows by [iwleonards](https://github.com/iwleonards/extract-mfg).
+
+Be careful, you have sole responsibility for not bricking your residential gateway.
+
+In case they are needed, here are firmware archives:
+* [1.0.29 Firmware](https://mega.nz/file/35lBkbzC#MTrKdt57SEuz81Tn3MBKm-o_s1zv643MLmxyKILjsk8)
+* [Firmware archive](https://drive.google.com/file/d/1AcP3gbjpZOsnGTFApQOlalLzpjidUDj4/view?usp=drivesdk)
+
+4. Upload your extracted certs (see Extracting Certificates) to /conf/pfatt/wpa. You should have three files in the wpa directory as such. You may also need to match the permissions.
       ```
       [2.4.4-RELEASE][root@pfsense.knox.lan]/conf/pfatt/wpa: ls -al
       total 19
@@ -71,7 +80,7 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
       -rw-------  1 root  wheel   887 Jan 10 16:32 private.pem
       ```
     
-4. To start pfatt.sh script at the beginning of the boot process pfSense team recomments you use a package called shellcmd. Use pfSense package installer to find and install it. Once you have shellcmd package installed you can find it in Services > Shellcmd. Now add a new command and fill it up accordingly (make sure to select earlyshellcmd from a dropdown):
+5. To start pfatt.sh script at the beginning of the boot process pfSense team recomments you use a package called shellcmd. Use pfSense package installer to find and install it. Once you have shellcmd package installed you can find it in Services > Shellcmd. Now add a new command and fill it up accordingly (make sure to select earlyshellcmd from a dropdown):
     ```
     Command: /root/bin/pfatt.sh
     Shellcmd Type: earlyshellcmd
@@ -81,25 +90,16 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
 
     This can also be acomplished by manually editing your pfSense /conf/config.xml file. Add <earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd> above </system>. This method is not recommended and is frowned upon by pfSense team.
 
-5. Connect cables:
+6. Connect cables:
     - `$ONT_IF` to ONT (outside)
     - `LAN NIC` to local switch (as normal)
 
-6. Prepare for console access.
-7. Reboot.
-8. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not normally change. However, if you moved or re-purposed your LAN interface for this setup, you'll need to re-apply any existing configuration (like your VLANs) to your new LAN interface. pfSense does not need to manage `$RG_IF` or `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
-9. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
+7. Prepare for console access.
+8. Reboot.
+9. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not normally change. However, if you moved or re-purposed your LAN interface for this setup, you'll need to re-apply any existing configuration (like your VLANs) to your new LAN interface. pfSense does not need to manage `$RG_IF` or `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
+10. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
 
 If everything is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, tagging the WAN traffic with VLAN0, and your WAN interface configured with an IPv4 address via DHCP.
-
-## Extracting Certificates
-Certificates can be extracted by the exploitation of the residential gateway to get a root shell. Here are instructions to do so with windows by [iwleonards](https://github.com/iwleonards/extract-mfg).
-
-Be careful, you have sole responsibility for not bricking your residential gateway.
-
-In case they are needed, here are firmware archives:
-[1.0.29 Firmware](https://mega.nz/file/35lBkbzC#MTrKdt57SEuz81Tn3MBKm-o_s1zv643MLmxyKILjsk8)
-[Firmware archive](https://drive.google.com/file/d/1AcP3gbjpZOsnGTFApQOlalLzpjidUDj4/view?usp=drivesdk)
 
 # IPv6 Setup
 
