@@ -1,8 +1,6 @@
 # About
 
-This repository includes my notes on enabling a true bridge mode setup with AT&T U-Verse and pfSense. This method utilizes [netgraph](https://www.freebsd.org/cgi/man.cgi?netgraph(4)) which is a graph based kernel networking subsystem of FreeBSD. This low-level solution was required to account for the unique issues surrounding bridging 802.1X traffic and tagging a VLAN with an id of 0. I've tested and confirmed this setup works with AT&T U-Verse Internet on the ARRIS NVG589, NVG599 and BGW210-700 residential gateways (probably others too). For Pace 5268AC see special details below.
-
-There are a few other methods to accomplish true bridge mode, so be sure to see what easiest for you. True Bridge Mode is also possible in a Linux via ebtables or using hardware with a VLAN swap trick. For me, I was not using a Linux-based router and the VLAN swap did not seem to work for me.
+This repository allows bypassing the AT&T U-Verse fiber gateway using pfSense. This method utilizes [netgraph](https://www.freebsd.org/cgi/man.cgi?netgraph) which is a graph-based kernel networking subsystem of FreeBSD. This low-level solution was required to account for the unique issues surrounding bridging 802.1X traffic and tagging a VLAN with an id of 0. I've tested and confirmed this setup works with AT&T U-Verse Internet on the BGW210-700 residential gateway. It probably works with others too.
 
 The netgraph method will allow you to fully utilize your own router and fully bypass your residential gateway. It survives reboots, re-authentications, IPv6, and new DHCP leases.
 
@@ -15,7 +13,7 @@ Before continuing to the setup, it's important to understand how this method wor
 First, let's talk about what happens in the standard setup (without any bypass). At a high level, the following process happens when the gateway boots up:
 
 1. All traffic on the ONT is protected with [802.1/X](https://en.wikipedia.org/wiki/IEEE_802.1X). So in order to talk to anything, the Router Gateway must first perform the [authentication procedure](https://en.wikipedia.org/wiki/IEEE_802.1X#Typical_authentication_progression). This process uses a unique certificate that is hardcoded on your residential gateway.
-2. Once the authentication completes, you'll be able to properly "talk" to the outside. However, all of your traffic will need to be tagged with VLAN ID 0 (a.k.a. VLAN Priority Tagging<sup>[[1]](https://wikipedia.org/wiki/IEEE_802.1Q#Frame_format)[[2]](https://www.cisco.com/c/en/us/td/docs/switches/connectedgrid/cg-switch-sw-master/software/configuration/guide/vlan0/b_vlan_0.html)</sup>) before the IP gateway will respond.  
+2. Once the authentication completes, you'll be able to properly "talk" to the outside. However, all of your traffic will need to be tagged with VLAN ID 0 (a.k.a. VLAN Priority Tagging<sup>[[1]](https://wikipedia.org/wiki/IEEE_802.1Q#Frame_format)[[2]](https://www.cisco.com/c/en/us/td/docs/switches/connectedgrid/cg-switch-sw-master/software/configuration/guide/vlan0/b_vlan_0.html)</sup>) before the IP gateway will respond.
 3. Once traffic is tagged with VLAN0, your residential gateway needs to request a public IPv4 address via DHCP. The MAC address in the DHCP request needs to match that of the MAC address that's assigned to your AT&T account. Other than that, there's nothing special about the DCHPv4 handshake.
 4. After the DHCP lease is issued, the WAN setup is complete. Your LAN traffic is then NAT'd and routed to the outside.
 
@@ -254,58 +252,11 @@ $ ngctl show ue0:
 
 In some circumstances, pfSense may alter your netgraph. This is especially true if pfSense manages either your `$RG_IF` or `$ONT_IF`. If you make some interface changes and your connection breaks, check to see if your netgraph was changed.
 
-# Virtualization Notes
-
-This setup has been tested on physical servers and virtual machines. Virtualization adds another layer of complexity for this setup, and will take extra consideration.
-
-## QEMU / KVM / Proxmox
-
-Proxmox uses a bridged networking model, and thus utilizes Linux's native bridge capability. To use this netgraph method, you do a PCI passthrough for the `$RG_IF` and `$ONT_IF` NICs. The bypass procedure should then be the same.
-
-You can also solve the EAP/802.1X and VLAN0/802.1Q problem by setting the `group_fwd_mask` and creating a vlan0 interface to bridge to your VM. See *Other Methods* below.
-
-## ESXi
-
-I haven't tried to do this with ESXi. Feel free to submit a PR with notes on your experience. PCI passthrough is probably the best approach here though.
-
-# Other Methods
-
-## Linux
-
-If you're looking how to do this on a Linux-based router, please refer to [this method](http://blog.0xpebbles.org/Bypassing-At-t-U-verse-hardware-NAT-table-limits) which utilizes ebtables and some kernel features.  The method is well-documented there and I won't try to duplicate it. This method is generally more straight forward than doing this on BSD. However, please submit a PR for any additional notes for running on Linux routers.
-
-## VLAN Swap
-
-There is a whole thread on this at [DSLreports](http://www.dslreports.com/forum/r29903721-AT-T-Residential-Gateway-Bypass-True-bridge-mode). The gist of this method is that you connect your ONT, RG and WAN to a switch. Create two VLANs. Assign the ONT and RG to VLAN1 and the WAN to VLAN2. Let the RG authenticate, then change the ONT VLAN to VLAN2. The WAN the DHCPs and your in business.
-
-However, I don't think this works for everyone. I had to explicitly tag my WAN traffic to VLAN0 which wasn't supported on my switch.
-
-## OPNSense / FreeBSD
-For OPNSense 20.1:
-follow the pfSense instructions, EXCEPT:
-1) use file opnatt.sh
-2) do *NOT* install the ng_etf.ko, as OPNSense already has this module installed.
-3) put the opnatt.sh script into `/usr/local/etc/rc.syshook.d/early` as `99-opnatt.sh`
-4) do *NOT* modify config.xml, nor do any of the duid stuff
-5) note: You *CAN* use IPv6 Prefix id 0, as OPNSense does *NOT* assign a routeable IPv6 address to ngeth0
-
-I haven't tried this with native FreeBSD, but I imagine the process is ultimately the same with netgraph. Feel free to submit a PR with notes on your experience.
-
 # References
 
-- http://blog.0xpebbles.org/Bypassing-At-t-U-verse-hardware-NAT-table-limits
-- https://forum.netgate.com/topic/99190/att-uverse-rg-bypass-0-2-btc/
-- http://www.dslreports.com/forum/r29903721-AT-T-Residential-Gateway-Bypass-True-bridge-mode
-- https://www.dslreports.com/forum/r32127305-True-Bridge-mode-on-pfSense-with-netgraph
-- https://www.dslreports.com/forum/r32116977-AT-T-Fiber-RG-Bypass-pfSense-IPv6
-- http://www.netbsd.org/gallery/presentations/ast/2012_AsiaBSDCon/Tutorial_NETGRAPH.pdf
+- [MonkWho](https://github.com/MonkWho/pfatt) - Many references on his page
 
 # Credits
 
-This took a lot of testing and a lot of hours to figure out. A unique solution was required for this to work in pfSense. If this helped you out, please buy us a coffee.
-
-- [rajl](https://forum.netgate.com/user/rajl) - for the netgraph idea - 1H8CaLNXembfzYGDNq1NykWU3gaKAjm8K5
-- [pyrodex](https://www.dslreports.com/profile/1717952) - for IPv6 - ?
-- [aus](https://github.com/aus) - 31m9ujhbsRRZs4S64njEkw8ksFSTTDcsRU
-- [/u/MisterBazz](https://www.reddit.com/user/MisterBazz/) - [for the initial setup guide on U-verse TV documentation](https://www.reddit.com/r/PFSENSE/comments/ag43rb/att_bgw210_true_independent_bridge_mode_uverse/) that formed the basis for [U-VERSE_TV.md](U-VERSE_TV.md)
-- [0xC0ncord](https://github.com/0xC0ncord) - for the [U-Verse TV Documentation](U-VERSE_TV.md)
+- [MonkWho](https://github.com/MonkWho/pfatt) - For the code that was forked. Other credits on his page
+- [aus](https://github.com/aus) - 31m9ujhbsRRZs4S64njEkw8ksFSTTDcsRU - For the original work
