@@ -61,13 +61,13 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
     ```
 
 3. Extracting Certificates:
-Certificates can be extracted by the exploitation of the residential gateway to get a root shell. Here are instructions to do so with windows by [iwleonards](https://github.com/iwleonards/extract-mfg).
+    Certificates can be extracted by the exploitation of the residential gateway to get a root shell. Here are instructions to do so with windows by [iwleonards](https://github.com/iwleonards/extract-mfg).
 
-Be careful, you have sole responsibility for not bricking your residential gateway.
+    Be careful, you have sole responsibility for not bricking your residential gateway.
 
-In case they are needed, here are firmware archives:
-* [1.0.29 Firmware](https://mega.nz/file/35lBkbzC#MTrKdt57SEuz81Tn3MBKm-o_s1zv643MLmxyKILjsk8)
-* [Firmware archive](https://drive.google.com/file/d/1AcP3gbjpZOsnGTFApQOlalLzpjidUDj4/view?usp=drivesdk)
+    In case they are needed, here are firmware archives:
+    * [1.0.29 Firmware](https://mega.nz/file/35lBkbzC#MTrKdt57SEuz81Tn3MBKm-o_s1zv643MLmxyKILjsk8)
+    * [Firmware archive](https://drive.google.com/file/d/1AcP3gbjpZOsnGTFApQOlalLzpjidUDj4/view?usp=drivesdk)
 
 4. Upload your extracted certs (see Extracting Certificates) to /conf/pfatt/wpa. You should have three files in the wpa directory as such. You may also need to match the permissions.
       ```
