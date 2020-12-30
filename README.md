@@ -198,7 +198,7 @@ The netgraph system provides a uniform and modular system for the implementation
 
 Your netgraph should look something like this:
 
-![netgraph](img/ngctl.png)
+![netgraph](img/netgraph.png)
 
 In this setup, the `ue0` interface is my `$RG_IF` and the `bce0` interface is my `$ONT_IF`. You can generate your own graphviz via `ngctl dot`. Copy the output and paste it at [webgraphviz.com](http://www.webgraphviz.com/).
 
