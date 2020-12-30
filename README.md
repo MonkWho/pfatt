@@ -47,13 +47,13 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
 
 ## Install
 
-1. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device. In my environment, it's:
+1. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device.
     ```shell
     ONT_IF='xx0' # NIC -> ONT / Outside
     RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx' # MAC address of Residential Gateway
     ```
 
-2. Copy `bin/pfatt.sh` to `/root/bin` (or any directory):
+2. Copy `bin/pfatt.sh` to `/root/bin` (or any directory) and make executable:
     ```
     ssh root@pfsense mkdir /root/bin
     scp bin/pfatt.sh root@pfsense:/root/bin/
@@ -91,6 +91,15 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
 9. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
 
 If everything is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, tagging the WAN traffic with VLAN0, and your WAN interface configured with an IPv4 address via DHCP.
+
+## Extracting Certificates
+Certificates can be extracted by the exploitation of the residential gateway to get a root shell. Here is a good way to do it using windows: https://github.com/iwleonards/extract-mfg
+
+References
+
+https://www.devicelocksmith.com/2018/12/eap-tls-credentials-decoder-for-nvg-and.html
+https://www.nomotion.net/blog/sharknatto/
+https://github.com/MakiseKurisu/NVG589/wiki
 
 # IPv6 Setup
 
