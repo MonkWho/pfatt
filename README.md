@@ -88,7 +88,7 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
     It should look like this:
     ![Shellcmd Settings](img/Shellcmd.png)
 
-    This can also be acomplished by manually editing your pfSense /conf/config.xml file. Add <earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd> above </system>. This method is not recommended and is frowned upon by pfSense team.
+    This can also be accomplished by manually editing your pfSense /conf/config.xml file. Add <earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd> above </system>. This method is not recommended and is frowned upon by pfSense team.
 
 6. Connect cables:
     - `$ONT_IF` to ONT (outside)
