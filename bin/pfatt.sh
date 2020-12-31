@@ -127,9 +127,5 @@ getTimestamp(){
         fi
     done
     echo "$(getTimestamp) pfatt ngeth0 should now be available to configure as your WAN..."
-    echo "$(getTimestamp) pfatt done!"
-    else
-    echo "$(getTimestamp) pfatt error: unknown EAP_MODE. '$EAP_MODE' is not valid. exiting..."
-    exit 1
-    fi
+    echo "$(getTimestamp) pfatt done!"    
 } >> $LOG
