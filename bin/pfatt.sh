@@ -28,8 +28,7 @@ getTimestamp(){
     echo -n "$(getTimestamp)   creating vlan node and interface... "
     /usr/sbin/ngctl mkpeer $ONT_IF: vlan lower downstream
     /usr/sbin/ngctl name $ONT_IF:lower vlan0
-    /usr/sbin/ngctl mkpeer vlan0: eiface vlan0 ether
-    
+    /usr/sbin/ngctl mkpeer vlan0: eiface vlan0 ether    
     /usr/sbin/ngctl msg vlan0: 'addfilter { vlan=0 hook="vlan0" }'
     /usr/sbin/ngctl msg ngeth0: set $RG_ETHER_ADDR
     echo "OK!" 
@@ -47,14 +46,8 @@ getTimestamp(){
     # /sbin/ifconfig $ONT_IF ether $RG_ETHER_ADDR
     # echo "OK!"
 
-    echo "$(getTimestamp) ngeth0 should now be available to configure as your pfSense WAN"
-    echo "$(getTimestamp) done!"
-} >> $LOG
-
-
 ## Added code
 
-{
     echo "$(getTimestamp) starting wpa_supplicant..."
 
     WPA_PARAMS="\
@@ -77,34 +70,39 @@ getTimestamp(){
     # if the above doesn't work try: WPA_DAEMON_CMD="/usr/sbin/wpa_supplicant -Dwired -i$ONT_IF -B -C /var/run/wpa_supplicant"
 
     # kill any existing wpa_supplicant process
+	echo -n "$(getTimestamp) killing any existing wpa_supplicant process... "
     PID=$(pgrep -f "wpa_supplicant.*ngeth0")
     if [ ${PID} > 0 ];
     then
         echo "$(getTimestamp) pfatt terminating existing wpa_supplicant on PID ${PID}..."
         RES=$(kill ${PID})
     fi
+    echo "OK!"
 
     # start wpa_supplicant daemon
+	echo -n "$(getTimestamp) starting wpa_supplicant daemon... "
     RES=$(${WPA_DAEMON_CMD})
     PID=$(pgrep -f "wpa_supplicant.*ngeth0")
     echo "$(getTimestamp) pfatt wpa_supplicant running on PID ${PID}..."
 
     # Set WPA configuration parameters.
-    echo "$(getTimestamp) pfatt setting wpa_supplicant network configuration..."
+    echo -n "$(getTimestamp) pfatt setting wpa_supplicant network configuration..."
     IFS=","
     for STR in ${WPA_PARAMS};
     do
         STR="$(echo -e "${STR}" | sed -e 's/^[[:space:]]*//')"
         RES=$(eval wpa_cli ${STR})
     done
+	echo "OK!"
 
     # wait until wpa_cli has authenticated.
+	echo -n "$(getTimestamp) waiting until wpa_cli has authenticated..."
     WPA_STATUS_CMD="wpa_cli status | grep 'suppPortStatus' | cut -d= -f2"
     IP_STATUS_CMD="ifconfig ngeth0 | grep 'inet\ ' | cut -d' ' -f2"
+	echo "OK!"
 
-    echo "$(getTimestamp) pfatt waiting EAP for authorization..."
-
-    # TODO: blocking for bootup
+    # Get authorization
+	echo "$(getTimestamp) pfatt waiting EAP for authorization..."
     while true;
     do
         WPA_STATUS=$(eval ${WPA_STATUS_CMD})
@@ -126,6 +124,7 @@ getTimestamp(){
             sleep 1
         fi
     done
-    echo "$(getTimestamp) pfatt ngeth0 should now be available to configure as your WAN..."
-    echo "$(getTimestamp) pfatt done!"    
+	
+	echo "$(getTimestamp) All done... ngeth0 should now be available to configure as your pfSense WAN"
+
 } >> $LOG
