@@ -54,6 +54,7 @@ getTimestamp(){
 
 ## Added code
 
+{
     echo "$(getTimestamp) starting wpa_supplicant..."
 
     WPA_PARAMS="\
@@ -131,3 +132,4 @@ getTimestamp(){
     echo "$(getTimestamp) pfatt error: unknown EAP_MODE. '$EAP_MODE' is not valid. exiting..."
     exit 1
     fi
+} >> $LOG
