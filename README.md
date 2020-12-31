@@ -23,7 +23,7 @@ First, let's talk about what happens in the standard setup (without any bypass).
 
 If you have valid certs that have been extracted from an authorized residential gateway device, you can utilize the native wpa_supplicant client in pfSense to perform 802.1X EAP-TLS authentication.
 
-Note that EAP-TLS authentication authorizes the device, not the subscriber. Meaning, any authorized device (BGW210) can be used to authorize the link. It does not have to match the residential gateway assigned to your account. For example, a BGW210 purchased of eBay can authorize the link. The subscriber's service is authorized separately (probably by the DHCP MAC and/or ONT serial number).
+Note that EAP-TLS authentication authorizes the device, not the subscriber. Meaning, any authorized device (e.g., BGW210) can be used to authorize the link. It does not have to match the residential gateway assigned to your account. For example, a BGW210 purchased of eBay can authorize the link. The subscriber's service is authorized separately (probably by the DHCP MAC and/or ONT serial number).
 
 In supplicant mode, the residential gateway can be permanently disconnected. We will use netgraph to tag our traffic with VLAN0 and spoof the MAC address from the residential gateway.
 
@@ -51,9 +51,9 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
     ```shell
     ONT_IF='xx0' # NIC -> ONT / Outside
     RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx' # MAC address of Residential Gateway
-    CA_PEM='insert filename.pem' # File name of gateway certificate
-    CLIENT_PEM='insert filename.pem' # File name of gateway certificate
-    PRIVATE_PEM='insert filename.pem' # File name of gateway certificate
+    CA_PEM='xxx.pem' # Replace xxx with file name of gateway certificate
+    CLIENT_PEM='xxx.pem' # Replace xxx with file name of gateway certificate
+    PRIVATE_PEM='xxx.pem' # Replace xxx with file name of gateway certificate
     ```
 
 2. Copy `bin/pfatt.sh` to `/root/bin` (or any directory) and make executable:
@@ -64,7 +64,7 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
     ```
 
 3. Extracting Certificates:
-    Certificates can be extracted by the exploitation of the residential gateway to get a root shell. Here are instructions to do so with windows by [iwleonards](https://github.com/iwleonards/extract-mfg).
+    Certificates can be extracted by the exploitation of the residential gateway to get a root shell. Here are instructions to do so in windows by [iwleonards](https://github.com/iwleonards/extract-mfg).
 
     Be careful, you have sole responsibility for not bricking your residential gateway.
 
@@ -72,7 +72,7 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
     * [1.0.29 Firmware](https://mega.nz/file/35lBkbzC#MTrKdt57SEuz81Tn3MBKm-o_s1zv643MLmxyKILjsk8)
     * [Firmware archive](https://drive.google.com/file/d/1AcP3gbjpZOsnGTFApQOlalLzpjidUDj4/view?usp=drivesdk)
 
-4. Upload your extracted certs (see Extracting Certificates) to /conf/pfatt/wpa. You should have three files in the wpa directory as such. You may also need to match the permissions.
+4. Upload your extracted certs (see Extracting Certificates) to /conf/pfatt/wpa. You should have three files in the wpa directory as such. You may also need to match the permissions. Do this with `sudo chmod -R 0600 /conf/pfatt/wpa`
       ```
       [2.4.4-RELEASE][root@pfsense.knox.lan]/conf/pfatt/wpa: ls -al
       total 19
@@ -98,8 +98,11 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
     - `LAN NIC` to local switch (as normal)
 
 7. Prepare for console access.
+
 8. Reboot.
+
 9. pfSense will detect new interfaces on bootup. Follow the prompts on the console to configure `ngeth0` as your pfSense WAN. Your LAN interface should not normally change. However, if you moved or re-purposed your LAN interface for this setup, you'll need to re-apply any existing configuration (like your VLANs) to your new LAN interface. pfSense does not need to manage `$ONT_IF`. I would advise not enabling those interfaces in pfSense as it can cause problems with the netgraph.
+
 10. In the webConfigurator, configure the  WAN interface (`ngeth0`) to DHCP using the MAC address of your Residential Gateway.
 
 If everything is setup correctly, netgraph should be bridging EAP traffic between the ONT and RG, tagging the WAN traffic with VLAN0, and your WAN interface configured with an IPv4 address via DHCP.
