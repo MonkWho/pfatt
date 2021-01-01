@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-ONT_IF='xx0'
+ONT_IF='igb0'
 RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx'
 CA_PEM='insert filename.pem'
 CLIENT_PEM='insert filename.pem'
