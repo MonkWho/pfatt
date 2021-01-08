@@ -1,11 +1,11 @@
 #!/bin/sh
 set -e
 
-ONT_IF='igb0'
+ONT_IF='xxx0'
 RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx'
-CA_PEM='insert filename.pem'
-CLIENT_PEM='insert filename.pem'
-PRIVATE_PEM='insert filename.pem'
+CA_PEM='xxx.pem'
+CLIENT_PEM='xxx.pem'
+PRIVATE_PEM='xxx.pem'
 
 LOG=/var/log/pfatt.log
 
