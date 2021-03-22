@@ -4,14 +4,14 @@ set -e
 ONT_IF='em0'
 RG_IF='em1'
 RG_ETHER_ADDR='xx:xx:xx:xx:xx:xx'
-LOG=/var/log/pfatt.log
+LOG=/var/log/opnatt.log
 
 getTimestamp(){
-    echo `date "+%Y-%m-%d %H:%M:%S :: [pfatt.sh] ::"`
+    echo `date "+%Y-%m-%d %H:%M:%S :: [opnatt.sh] ::"`
 }
 
 {
-    echo "$(getTimestamp) pfSense + AT&T U-verse Residential Gateway for true bridge mode"
+    echo "$(getTimestamp) opnSense + AT&T U-verse Residential Gateway for true bridge mode"
     echo "$(getTimestamp) Configuration: "
     echo "$(getTimestamp)        ONT_IF: $ONT_IF"
     echo "$(getTimestamp)         RG_IF: $RG_IF"
@@ -87,6 +87,6 @@ getTimestamp(){
     /sbin/ifconfig $ONT_IF promisc
     echo "OK!"
 
-    echo "$(getTimestamp) ngeth0 should now be available to configure as your pfSense WAN"
+    echo "$(getTimestamp) ngeth0 should now be available to configure as your opnSense WAN"
     echo "$(getTimestamp) done!"
 } >> $LOG
