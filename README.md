@@ -315,11 +315,10 @@ For FreeBSD:
 1) use file freeatt.sh
 2) ng_etf.ko is not needed, standard FreeBSD includes all of the required modules
 3) modules can be loaded from /boot/loader.conf, an example loader.conf with the modules listed is included (loading modules in the script should work, but lets do things "properly")
-4) set net.inet.ip.forwarding=1 and net.inet6.ip6.forwarding=1 in '/etc/sysctl.conf' and with 'sysctl net.inet.ip.forwarding=1 net.inet6.ip6.forwarding=1'
-5) put the freeatt.sh script into '/etc' and rename to 'start_if.$ONT_IF' in my case the file is '/etc/start_if.igb0' this will depend on your hardware
-6) in rc.conf, add the line 'ifconfig_$ONT_IF=""' this will trigger rc to run our start_if.$ONT_IF script to create the ngeth0 interface, and then do nothing else to the interface, in my case this line is 'ifconfig_igb0=""' (using $RG_IF instead probably gives the same result)
-7) you can then use rc.conf to configure ngeth0 as your wan interface as normal, and configure your lan interface, vlans, etc. as normal depending on your hardware and setup (mac address spoofing is set in the script already)
-8) configure pf, dhcpd, etc. to taste, generic examples provided
+4) put the freeatt.sh script into '/etc' and rename to 'start_if.$ONT_IF' in my case the file is '/etc/start_if.igb0' this will depend on your hardware
+5) in rc.conf, add the line 'ifconfig_$ONT_IF=""' this will trigger rc to run our start_if.$ONT_IF script to create the ngeth0 interface, and then do nothing else to the interface, in my case this line is 'ifconfig_igb0=""' (using $RG_IF instead probably gives the same result)
+6) configure the rest of rc.conf, an example is provided with the essentials, gateway_enable, DHCP settings etc.
+7) configure pf, dhcpd, etc. to taste, generic examples provided
 
 
 # U-verse TV
