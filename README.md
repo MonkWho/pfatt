@@ -321,11 +321,10 @@ For FreeBSD:
 7) configure pf, dhcpd, etc. to taste, generic examples provided
 
 Once you have IPv4 connectivity you're done, unless you want IPv6 as well.  The default dhclient still does not support IPv6, so:
-1) install ISC dhclient from ports/pkg 'pkg install dual-dhclient' this should also install 'isc-dhcp44-client'
-2) add the relevant ipv6 configuration to rc.conf, example is provided
-3) remove '-cf /dev/null' from the last line of '/usr/local/sbin/dual-dhclient'
-4) delete and recreate from scratch '/usr/local/etc/dhclient.conf' this file is a copy of dhclient.conf.example and is not useful out of the box, an example file is provided
-
+1) Install KAME dhcp6c 'pkg install dhcp6'
+2) Configure rc.conf with 'ipv6_cpe_wanif="ngeth0"' in addition to the other ipv6, dhcp6c, and rtadvd configuration in rc.conf, filling in with your lan interface(s)
+3) use the example configuration in '/usr/local/etc/dhcp6c.conf' to configure dhcp6c
+4) Set some inet6 rules in pf.conf and test
 
 # U-verse TV
 
