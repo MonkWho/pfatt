@@ -315,15 +315,15 @@ For FreeBSD:
 1) use file freeatt.sh
 2) ng_etf.ko is not needed, standard FreeBSD includes all of the required modules
 3) modules can be loaded from /boot/loader.conf, an example loader.conf with the modules listed is included (loading modules in the script should work, but lets do things "properly")
-4) put the freeatt.sh script into '/etc' and rename to 'start_if.$ONT_IF' in my case the file is '/etc/start_if.igb0' this will depend on your hardware
-5) in rc.conf, add the line 'ifconfig_$ONT_IF=""' this will trigger rc to run our start_if.$ONT_IF script to create the ngeth0 interface, and then do nothing else to the interface, in my case this line is 'ifconfig_igb0=""' (using $RG_IF instead probably gives the same result)
+4) put the freeatt.sh script into '/etc' and rename to `start_if.$ONT_IF` in my case the file is `/etc/start_if.igb0` this will depend on your hardware
+5) in rc.conf, add the line `ifconfig_$ONT_IF=""` this will trigger rc to run our start_if.$ONT_IF script to create the ngeth0 interface, and then do nothing else to the interface, in my case this line is `ifconfig_igb0=""` (using $RG_IF instead probably gives the same result)
 6) configure the rest of rc.conf, an example is provided with the essentials, gateway_enable, DHCP settings etc.
 7) configure pf, dhcpd, etc. to taste, generic examples provided
 
 Once you have IPv4 connectivity you're done, unless you want IPv6 as well.  The default dhclient still does not support IPv6, so:
 1) Install KAME dhcp6c 'pkg install dhcp6'
 2) Configure rc.conf with 'ipv6_cpe_wanif="ngeth0"' in addition to the other ipv6, dhcp6c, and rtadvd configuration in rc.conf, filling in with your lan interface(s)
-3) use the example configuration in '/usr/local/etc/dhcp6c.conf' to configure dhcp6c
+3) use the example configuration in `/usr/local/etc/dhcp6c.conf` to configure dhcp6c
 4) Set some inet6 rules in pf.conf and test
 
 # U-verse TV
