@@ -1,0 +1,51 @@
+wan = "ngeth0"
+lan = "xxx"
+
+#options
+set skip on lo0
+set block-policy drop
+set fingerprints "/etc/pf.os"
+set ruleset-optimization basic
+set optimization normal
+set limit { states 1624000, src-nodes 1624000, frags 5000, table-entries 400000 }
+
+
+#scrub
+scrub on $wan all random-id fragment reassemble
+scrub on $lan all random-id fragment reassemble
+
+
+#NAT
+nat on $wan inet from ! ($wan) to any -> ($wan)
+
+
+#Filter
+
+#default deny
+block drop in inet all label "Default deny rule IPv4"
+block drop out inet all label "Default deny rule IPv4"
+block drop in inet6 all label "Default deny rule IPv6"
+block drop out inet6 all label "Default deny rule IPv6"
+
+#allow dhcp/dhcpv6 client
+pass in quick on $wan proto udp from any port = bootps to any port = bootpc keep state label "allow dhcp client out WAN"
+pass out quick on $wan proto udp from any port = bootpc to any port = bootps keep state label "allow dhcp client out WAN"
+pass in quick on $wan inet6 proto udp from fe80::/10 port = dhcpv6-client to fe80::/10 port = dhcpv6-client keep state label "allow dhcpv6 client in WAN"
+pass in quick on $wan proto udp from any port = dhcpv6-server to any port = dhcpv6-client keep state label "allow dhcpv6 client in WAN"
+pass out quick on $wan proto udp from any port = dhcpv6-client to any port = dhcpv6-server keep state label "allow dhcpv6 client out WAN"
+
+#allow dhcp/dhcpv6 server
+pass in quick on $lan inet proto udp from any port = bootpc to 255.255.255.255 port = bootps keep state label "allow access to DHCP server"
+pass in quick on $lan inet proto udp from any port = bootpc to ($lan) port = bootps keep state label "allow access to DHCP server"
+pass out quick on $lan inet proto udp from ($lan) port = bootps to any port = bootpc keep state label "allow access to DHCP server"
+pass quick on $lan inet6 proto udp from fe80::/10 to fe80::/10 port = dhcpv6-client keep state label "allow access to DHCPv6 server"
+pass quick on $lan inet6 proto udp from fe80::/10 to ff02::/16 port = dhcpv6-client keep state label "allow access to DHCPv6 server"
+pass quick on $lan inet6 proto udp from fe80::/10 to ff02::/16 port = dhcpv6-server keep state label "allow access to DHCPv6 server"
+pass quick on $lan inet6 proto udp from ff02::/16 to fe80::/10 port = dhcpv6-server keep state label "allow access to DHCPv6 server"
+pass in quick on $lan inet6 proto udp from fe80::/10 to ($lan) port = dhcpv6-client keep state label "allow access to DHCPv6 server"
+pass out quick on $lan inet6 proto udp from ($lan) port = dhcpv6-server to fe80::/10 keep state label "allow access to DHCPv6 server"
+
+#allow self
+pass out inet all flags S/SA keep state allow-opts label "let out anything IPv4 from firewall host itself"
+pass out inet6 all flags S/SA keep state allow-opts label "let out anything IPv6 from firewall host itself"
+
