@@ -326,6 +326,8 @@ Once you have IPv4 connectivity you're done, unless you want IPv6 as well.  The 
 3) use the example configuration in `/usr/local/etc/dhcp6c.conf` to configure dhcp6c
 4) Set some inet6 rules in pf.conf and test
 
+Example configuration files are provided for bind, dhcpd, dhcpd6, rtadvd, etc. based off of a currently working dual stack router running FreeBSD 13, other versions of FreeBSD may work
+
 # U-verse TV
 
 See [U-VERSE_TV.md](U-VERSE_TV.md)
