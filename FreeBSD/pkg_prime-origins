@@ -1,0 +1,6 @@
+dns/bind916
+net/dhcp6
+devel/git
+security/gnupg
+net/isc-dhcp44-server
+ports-mgmt/pkg
