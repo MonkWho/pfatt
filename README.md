@@ -4,22 +4,17 @@ This repository allows bypassing the AT&T U-Verse fiber gateway using pfSense. T
 
 The netgraph method will allow you to fully utilize your own router and fully bypass your residential gateway. It survives reboots, re-authentications, IPv6 and new DHCP leases.
 
-# How it Works
+# Bypass Procedure
 
-Before continuing to the setup, it's important to understand how this method works. This will make configuration and troubleshooting much easier.
+## Prerequisites
 
-## Standard Procedure
+* Local or console access to pfSense
+* pfSense 2.5.1+ running on amd64 architecture
+* Two physical network interfaces on your pfSense server
+* The MAC address of your EAP-TLS Identity (from residential gateway used for certificates)
+* Valid certificates to perform EAP-TLS authentication (see Extracting Certificates)
 
-First, let's talk about what happens in the standard setup (without any bypass). At a high level, the following process happens when the gateway boots up:
-
-1. All traffic on the ONT is protected with [802.1/X](https://en.wikipedia.org/wiki/IEEE_802.1X). So in order to talk to anything, the Router Gateway must first perform the [authentication procedure](https://en.wikipedia.org/wiki/IEEE_802.1X#Typical_authentication_progression). This process uses a unique certificate that is hardcoded on your residential gateway.
-2. Once the authentication completes, you'll be able to properly "talk" to the outside. However, all of your traffic will need to be tagged with VLAN ID 0 (a.k.a. VLAN Priority Tagging<sup>[[1]](https://wikipedia.org/wiki/IEEE_802.1Q#Frame_format)[[2]](https://www.cisco.com/c/en/us/td/docs/switches/connectedgrid/cg-switch-sw-master/software/configuration/guide/vlan0/b_vlan_0.html)</sup>) before the IP gateway will respond.
-3. Once traffic is tagged with VLAN0, your residential gateway needs to request a public IPv4 address via DHCP. The MAC address in the DHCP request needs to match that of the MAC address that's assigned to your AT&T account. Other than that, there's nothing special about the DCHPv4 handshake.
-4. After the DHCP lease is issued, the WAN setup is complete. Your LAN traffic is then NAT'd and routed to the outside.
-
-## Bypass Procedure: Supplicant Method
-
-### Notes
+## Notes
 
 If you have valid certs that have been extracted from an authorized residential gateway device, you can utilize the native wpa_supplicant client in pfSense to perform 802.1X EAP-TLS authentication.
 
@@ -27,7 +22,9 @@ Note that EAP-TLS authentication authorizes the device, not the subscriber. Mean
 
 In supplicant mode, the residential gateway can be permanently disconnected. We will use netgraph to tag our traffic with VLAN0 and spoof the MAC address from the residential gateway.
 
-### Bypass Procedure
+## High Level Steps
+
+Before continuing to the setup, it's important to understand how this method works. This will make configuration and troubleshooting much easier.
 
 1. Netgraph creates an interface for us called ngeth0. This interface is connected to vlan0 which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface.
 2. wpa_supplicant binds to ngeth0 and initiates 802.1X EAP-TLS authentication
@@ -37,15 +34,7 @@ In supplicant mode, the residential gateway can be permanently disconnected. We 
 
 See the comments and commands bin/pfatt.sh for details about the netgraph setup.
 
-## Prerequisites
-
-* Local or console access to pfSense
-* pfSense 2.4.5 running on amd64 architecture
-* Two physical network interfaces on your pfSense server
-* The MAC address of your EAP-TLS Identity (from residential gateway used for certificates)
-* Valid certificates to perform EAP-TLS authentication (see Extracting Certificates)
-
-## Install
+## Detailed Steps
 
 1. Edit the following configuration variables in `bin/pfatt.sh` as noted below. `$RG_ETHER_ADDR` should match the MAC address of your Residential Gateway. AT&T will only grant a DHCP lease to the MAC they assigned your device.
     ```shell
@@ -74,7 +63,7 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
 
 4. Upload your extracted certs (see Extracting Certificates) to /conf/pfatt/wpa. You should have three files in the wpa directory as such. You may also need to match the permissions. Do this with `sudo chmod -R 0600 /conf/pfatt/wpa`
       ```
-      [2.4.4-RELEASE][root@pfsense.knox.lan]/conf/pfatt/wpa: ls -al
+      [2.5.1-RELEASE][root@pfsense.knox.lan]/conf/pfatt/wpa: ls -al
       total 19
       drwxr-xr-x  2 root  wheel     5 Jan 10 16:32 .
       drwxr-xr-x  4 root  wheel     5 Jan 10 16:33 ..
@@ -83,7 +72,7 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
       -rw-------  1 root  wheel   887 Jan 10 16:32 private.pem
       ```
     
-5. To start pfatt.sh script at the beginning of the boot process pfSense team recomments you use a package called shellcmd. Use pfSense package installer to find and install it. Once you have shellcmd package installed you can find it in Services > Shellcmd. Now add a new command and fill it up accordingly (make sure to select earlyshellcmd from a dropdown):
+5. To start pfatt.sh script at the beginning of the boot process pfSense team recommends you use a package called shellcmd. Use pfSense package installer to find and install it. Once you have shellcmd package installed you can find it in Services > Shellcmd. Now add a new command and fill it up accordingly (make sure to select earlyshellcmd from a dropdown):
     ```
     Command: /root/bin/pfatt.sh
     Shellcmd Type: earlyshellcmd
@@ -91,7 +80,7 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
     It should look like this:
     ![Shellcmd Settings](img/Shellcmd.png)
 
-    This can also be accomplished by manually editing your pfSense /conf/config.xml file. Add <earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd> above </system>. This method is not recommended and is frowned upon by pfSense team.
+    This can also be accomplished by manually editing your pfSense /conf/config.xml file. Add <earlyshellcmd>/root/bin/pfatt.sh</earlyshellcmd> above. This method is not recommended and is frowned upon by pfSense team.
 
 6. Connect cables:
     - `$ONT_IF` to ONT (outside)
@@ -111,7 +100,7 @@ If everything is setup correctly, netgraph should be bridging EAP traffic betwee
 
 Once your netgraph setup is in place and working, there aren't any netgraph changes required to the setup to get IPv6 working. These instructions can also be followed with a different bypass method other than the netgraph method. Big thanks to @pyrodex1980's [post](http://www.dslreports.com/forum/r32118263-) on DSLReports for sharing your notes.
 
-This setup assumes you have a fairly recent version of pfSense. I'm using 2.4.5.
+This setup assumes you have a fairly recent version of pfSense. I'm using 2.5.1.
 
 **DUID Setup**
 
@@ -220,7 +209,7 @@ There are 5 total nodes:
 ```
 3. Inspect the various nodes and hooks.
 
-### Reset netgraph
+## Reset netgraph
 
 `pfatt.sh` expects a clean netgraph before it can be ran. To reset a broken netgraph state, try this:
 
@@ -236,6 +225,5 @@ In some circumstances, pfSense may alter your netgraph. This is especially true 
 
 # Credits
 
-- [MonkWho](https://github.com/MonkWho/pfatt) - For the code that was forked. Other credits on his page
 - [aus](https://github.com/aus) - 31m9ujhbsRRZs4S64njEkw8ksFSTTDcsRU - For the original work
 - [iwleonards](https://github.com/iwleonards/extract-mfg) - Residential gateway certificate extraction
