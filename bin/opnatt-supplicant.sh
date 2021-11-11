@@ -31,11 +31,9 @@ EAP_SUPPLICANT_IDENTITY=""
 /usr/bin/logger -st "pfatt" "  ONT---[] [$ONT_IF]$HOST"
 /usr/bin/logger -st "pfatt" "creating vlan node and ngeth0 interface..."
 
-#/usr/sbin/ngctl mkpeer $ONT_IF: vlan lower downstream
-/usr/sbin/ngctl mkpeer em1: vlan lower downstream
+/usr/sbin/ngctl mkpeer $ONT_IF: vlan lower downstream
 
-#/usr/sbin/ngctl name $ONT_IF:lower vlan0
-/usr/sbin/ngctl name em1:lower vlan0
+/usr/sbin/ngctl name $ONT_IF:lower vlan0
 
 /usr/sbin/ngctl mkpeer vlan0: eiface vlan0 ether
 /usr/sbin/ngctl msg vlan0: 'addfilter { vlan=0 hook="vlan0" }'
