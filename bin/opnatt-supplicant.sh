@@ -11,6 +11,8 @@ EAP_SUPPLICANT_IDENTITY=""
 
 ##### DO NOT EDIT BELOW #################################################################################
 
+/sbin/kldload -nq ng_ether
+
 /usr/bin/logger -st "pfatt" "starting pfatt..."
 /usr/bin/logger -st "pfatt" "configuration:"
 /usr/bin/logger -st "pfatt" "  ONT_IF = $ONT_IF"
