@@ -58,7 +58,7 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
     Be careful, you have sole responsibility for not bricking your residential gateway.
 
     In case they are needed, here are firmware archives:
-    * [1.0.29 Firmware](https://mega.nz/file/35lBkbzC#MTrKdt57SEuz81Tn3MBKm-o_s1zv643MLmxyKILjsk8)
+    * [1.0.29 Firmware](https://drive.google.com/file/d/1VYxpTu9m3cLIv8vCTzs_ccFAblJjH8c0/view?usp=sharing)
     * [Firmware archive](https://drive.google.com/file/d/1AcP3gbjpZOsnGTFApQOlalLzpjidUDj4/view?usp=drivesdk)
 
 4. Upload your extracted certs (see Extracting Certificates) to /conf/pfatt/wpa. You should have three files in the wpa directory as such. You may also need to match the permissions. Do this with `sudo chmod -R 0600 /conf/pfatt/wpa`
