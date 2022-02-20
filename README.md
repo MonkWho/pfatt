@@ -63,7 +63,7 @@ See the comments and commands bin/pfatt.sh for details about the netgraph setup.
 
 4. Upload your extracted certs (see Extracting Certificates) to /conf/pfatt/wpa. You should have three files in the wpa directory as such. You may also need to match the permissions. Do this with `sudo chmod -R 0600 /conf/pfatt/wpa`
       ```
-      [2.5.1-RELEASE][root@pfsense.knox.lan]/conf/pfatt/wpa: ls -al
+      [2.5.2-RELEASE][root@pfsense.knox.lan]/conf/pfatt/wpa: ls -al
       total 19
       drwxr-xr-x  2 root  wheel     5 Jan 10 16:32 .
       drwxr-xr-x  4 root  wheel     5 Jan 10 16:33 ..
@@ -100,7 +100,7 @@ If everything is setup correctly, netgraph should be bridging EAP traffic betwee
 
 Once your netgraph setup is in place and working, there aren't any netgraph changes required to the setup to get IPv6 working. These instructions can also be followed with a different bypass method other than the netgraph method. Big thanks to @pyrodex1980's [post](http://www.dslreports.com/forum/r32118263-) on DSLReports for sharing your notes.
 
-This setup assumes you have a fairly recent version of pfSense. I'm using 2.5.1.
+This setup assumes you have a fairly recent version of pfSense. I'm using 2.5.2.
 
 **DUID Setup**
 
