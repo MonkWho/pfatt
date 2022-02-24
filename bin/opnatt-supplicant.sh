@@ -47,7 +47,7 @@ EAP_SUPPLICANT_IDENTITY=""
 /sbin/ifconfig $ONT_IF ether $RG_ETHER_ADDR
 /sbin/ifconfig $ONT_IF up
 
-/sbin/ifconfig $ONT_IF promisc
+/sbin/ifconfig $ONT_IF promisc -vlanhwtag -vlanhwfilter -vlanhwtso
 
 /usr/bin/logger -st "pfatt" "starting wpa_supplicant..."
 
