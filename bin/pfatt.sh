@@ -80,7 +80,8 @@ getTimestamp(){
     echo "OK!"
 
     echo -n "$(getTimestamp) enabling promiscuous mode on $ONT_IF... "
-    /sbin/ifconfig $ONT_IF promisc
+    # Updated as per https://github.com/MonkWho/pfatt/issues/65
+    /sbin/ifconfig $ONT_IF promisc -vlanhwtag -vlanhwfilter -vlanhwtso
     echo "OK!"
 
     echo "$(getTimestamp) ngeth0 should now be available to configure as your pfSense WAN"
