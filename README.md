@@ -34,15 +34,15 @@ First, let's talk about what happens in the stock residential gateway setup (wit
 
 ### Bypass Procedure
 
-To bypass your residential gateway to fully utilize pfSense, we can emulate the above stock procedure by either two methods: bridging the 802.1X EAP-TLS authentication traffic or by utilizing the native [wpa_supplicant](https://www.freebsd.org/cgi/man.cgi?wpa_supplicant) client with valid certificates to perform the 802.1X EAP-TLS authentication. 
+To bypass your residential gateway to fully utilize OPNsense, we can emulate the above stock procedure by either two methods: bridging the 802.1X EAP-TLS authentication traffic or by utilizing the native [wpa_supplicant](https://www.freebsd.org/cgi/man.cgi?wpa_supplicant) client with valid certificates to perform the 802.1X EAP-TLS authentication. 
 
-The bridge method is the easiest, but it requires the residential gateway to be powered on and connected to your pfsense box during the authentication procedure. 
+The bridge method is the easiest, but it requires the residential gateway to be powered on and connected to your OPNsense box during the authentication procedure. 
 
-The supplicant method is more difficult, because it requires extracting valid certificates through the exploitation of known vulnerabilities or by dumping the flash of your residential gateway. However, it comes with the benefit of being able to give full network management to pfsense (no residential gateway required to be connected at all, even at boot). It is also more stable and resilient to edge cases of reboots, outages, or other conditions.
+The supplicant method is more difficult, because it requires extracting valid certificates through the exploitation of known vulnerabilities or by dumping the flash of your residential gateway. However, it comes with the benefit of being able to give full network management to OPNsense (no residential gateway required to be connected at all, even at boot). It is also more stable and resilient to edge cases of reboots, outages, or other conditions.
 
 #### Bridge Method  
 
-If we connect our residential gateway and ONT to our pfSense box, we can bridge the 802.1X EAP-TLS authentication traffic, tag our WAN traffic as VLAN ID 0, and request a public IPv4 via DHCP using a MAC address that matches our assigned residential gateway.
+If we connect our residential gateway and ONT to our OPNsense box, we can bridge the 802.1X EAP-TLS authentication traffic, tag our WAN traffic as VLAN ID 0, and request a public IPv4 via DHCP using a MAC address that matches our assigned residential gateway.
 
 Unfortunately, there are some challenges with emulating this process. First, it's against RFC to bridge 802.1X traffic and it is not supported in FreeBSD. Second, tagging traffic as VLAN ID 0 is also not supported through the standard interfaces. 
 
@@ -53,7 +53,7 @@ Residential Gateway
 [ONT Port]
   |
   |
-[nic0] pfSense [nic1] 
+[nic0] OPNsense [nic1] 
                  |
                  |
                [ONT]
@@ -64,30 +64,30 @@ With netgraph, our procedure looks like this (at a high level):
 
 1. The residential gateway initiates a 802.1X EAPOL-START packet.
 2. The packet then is bridged through netgraph to the ONT interface.
-3. If the packet matches an 802.1X type (which is does), it is passed to the ONT interface. If it does not, the packet is discarded. This prevents our residential gateway from initiating DHCP. We want pfSense to handle that.
+3. If the packet matches an 802.1X type (which is does), it is passed to the ONT interface. If it does not, the packet is discarded. This prevents our residential gateway from initiating DHCP. We want OPNsense to handle that.
 4. The AT&T RADIUS server should then see and respond to the EAPOL-START, which is passed back through our netgraph back to the residential gateway. At this point, the 802.1X EAP-TLS authentication should be continue and complete.
 5. netgraph has also created an interface for us called `ngeth0`. This interface is connected to `ng_vlan` which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface. 
-6. pfSense can then be configured to use `ngeth0` as the WAN interface.
+6. OPNsense can then be configured to use `ngeth0` as the WAN interface.
 7. Next, we spoof the MAC address of the residential gateway and request a DHCP lease on `ngeth0`. The packets get tagged as VLAN0 and exit to the ONT. 
 8. Now the DHCP handshake should complete and we should be on our way!
 
 #### Supplicant Method
 
-Alternatively, if you have valid certs that have been extracted from an authorized residential gateway device, you can utilize the native wpa_supplicant client in pfSense to perform 802.1X EAP-TLS authentication. 
+Alternatively, if you have valid certs that have been extracted from an authorized residential gateway device, you can utilize the native wpa_supplicant client in OPNsense to perform 802.1X EAP-TLS authentication. 
 
 I will also note that EAP-TLS authentication authorizes the device, not the subscriber. Meaning, any authorized device (NVG589, NVG599, 5268AC, BGW210, etc) can be used to authorize the link. It does not have to match the RG assigned to your account. For example, an NVG589 purchased of eBay can authorize the link. The subscriber's *service* is authorized separately (probably by the DHCP MAC and/or ONT serial number).
 
 In supplicant mode, the residential gateway can be permanently disconnected. We will still use netgraph to tag our traffic with VLAN0. Our cabling then looks pretty simple:
 
 ```
-Outside[ONT]---[nic0]pfsense
+Outside[ONT]---[nic0]OPNsense
 ```
 
 With netgraph, the procedure also looks a little simpler:
 
 1. netgraph has created an interface for us called `ngeth0`. This interface is connected to `ng_vlan` which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface. 
 2. wpa_supplicant binds to `ngeth0` and initiates 802.1X EAP-TLS authentication
-3. pfSense can then be configured to use `ngeth0` as the WAN interface.
+3. OPNsense can then be configured to use `ngeth0` as the WAN interface.
 4. Next, we spoof the MAC address of the residential gateway and request a DHCP lease on `ngeth0`. The packets get tagged as VLAN0 and exit to the ONT. 
 5. Now the DHCP handshake should complete and we should be on our way!
 
