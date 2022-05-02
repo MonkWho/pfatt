@@ -18,8 +18,10 @@ getTimestamp(){
     echo "$(getTimestamp) RG_ETHER_ADDR: $RG_ETHER_ADDR"
 
     echo -n "$(getTimestamp) attaching interfaces to ng_ether... "
-    /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$ONT_IF');"
-    /usr/local/bin/php -r "pfSense_ngctl_attach('.', '$RG_IF');"
+    # Only needed for older versions of pfatt. Newer versions handle this automatically.
+    # Eventually this can be remove.
+    /usr/local/bin/php -r "function_exists('pfSense_ngctl_attach') && pfSense_ngctl_attach('.', '$ONT_IF');"
+    /usr/local/bin/php -r "function_exists('pfSense_ngctl_attach') && pfSense_ngctl_attach('.', '$RG_IF');"
     echo "OK!"
 
     echo "$(getTimestamp) building netgraph nodes..."
