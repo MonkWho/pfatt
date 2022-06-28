@@ -1,8 +1,17 @@
 # About
 
-This repository includes my notes on enabling a true bridge mode setup with AT&T U-Verse and OPNsense. This method utilizes [netgraph](https://www.freebsd.org/cgi/man.cgi?netgraph(4)) which is a graph based kernel networking subsystem of FreeBSD. This low-level solution was required to account for the unique issues surrounding bridging 802.1X traffic and tagging a VLAN with an id of 0. I've tested and confirmed this setup works with AT&T U-Verse Internet on the ARRIS NVG589, NVG599 and BGW210-700 residential gateways (probably others too). For Pace 5268AC see special details below.
+This repository includes my notes on enabling a true bridge mode setup with AT&T U-Verse and OPNsense. This method utilizes [netgraph](https://www.freebsd.org/cgi/man.cgi?netgraph(4)) which is a graph based kernel networking subsystem of FreeBSD. This low-level solution was required to account for the unique issues surrounding bridging 802.1X traffic and tagging a VLAN with an id of 0. 
 
-There are a few other methods to accomplish true bridge mode, so be sure to see what easiest for you. True Bridge Mode is also possible in a Linux via ebtables or using hardware with a VLAN swap trick. For me, I was not using a Linux-based router and the VLAN swap did not seem to work for me.
+There are a few other methods to accomplish true bridge mode, so be sure to see what easiest for you. True Bridge Mode is also possible in a Linux via ebtables or using hardware with a VLAN swap trick.
+
+## Residential Gateway
+
+AT&T currently offers a variety of residential gateways to their fiber customers. Depending on what was available at the time of your install, you may have one of these models:
+
+- Motorola NVG589
+- Arris NVG599
+- Arris BGW210
+- Pace 5268AC
 
 While many AT&T residential gateways offer something called _IP Passthrough_, it does not provide the same advantages of a true bridge mode. For example, the NAT table is still managed by the gateway, which is limited to a measly 8192 sessions (although it becomes unstable at even 60% capacity).
 
@@ -29,6 +38,14 @@ Unfortunately, there are some challenges with emulating this process. First, it'
 
 This is where netgraph comes in. Netgraph allows you to break some rules and build the proper plumbing to make this work. So, our cabling looks like this:
 
+#### Bridge Method  
+
+If we connect our residential gateway and ONT to our pfSense box, we can bridge the 802.1X EAP-TLS authentication traffic, tag our WAN traffic as VLAN ID 0, and request a public IPv4 via DHCP using a MAC address that matches our assigned residential gateway.
+
+Unfortunately, there are some challenges with emulating this process. First, it's against RFC to bridge 802.1X traffic and it is not supported in FreeBSD. Second, tagging traffic as VLAN ID 0 is also not supported through the standard interfaces. 
+
+This is where netgraph comes in. Netgraph allows you to break some rules and build the proper plumbing to make this work. So, our cabling looks like this:
+
 ```
 Residential Gateway
 [ONT Port]
@@ -52,19 +69,82 @@ With netgraph, our procedure looks like this (at a high level):
 1. Next, we spoof the MAC address of the residential gateway and request a DHCP lease on `ngeth0`. The packets get tagged as VLAN0 and exit to the ONT.
 1. Now the DHCP handshake should complete and we should be on our way!
 
+#### Supplicant Method
+
+Alternatively, if you have valid certs that have been extracted from an authorized residential gateway device, you can utilize the native wpa_supplicant client in pfSense to perform 802.1X EAP-TLS authentication. 
+
+I will also note that EAP-TLS authentication authorizes the device, not the subscriber. Meaning, any authorized device (NVG589, NVG599, 5268AC, BGW210, etc) can be used to authorize the link. It does not have to match the RG assigned to your account. For example, an NVG589 purchased of eBay can authorize the link. The subscriber's *service* is authorized separately (probably by the DHCP MAC and/or ONT serial number).
+
+In supplicant mode, the residential gateway can be permanently disconnected. We will still use netgraph to tag our traffic with VLAN0. Our cabling then looks pretty simple:
+
+```
+Outside[ONT]---[nic0]pfsense
+```
+
+With netgraph, the procedure also looks a little simpler:
+
+1. netgraph has created an interface for us called `ngeth0`. This interface is connected to `ng_vlan` which is configured to tag all traffic as VLAN0 before sending it on to the ONT interface. 
+2. wpa_supplicant binds to `ngeth0` and initiates 802.1X EAP-TLS authentication
+3. pfSense can then be configured to use `ngeth0` as the WAN interface.
+4. Next, we spoof the MAC address of the residential gateway and request a DHCP lease on `ngeth0`. The packets get tagged as VLAN0 and exit to the ONT. 
+5. Now the DHCP handshake should complete and we should be on our way!
+
+Hopefully, that now gives you an idea of what we are trying to accomplish. See the comments and commands `bin/pfatt.sh` for details about the netgraph setup.
+
+But enough talk. Now for the fun part!
+
 Hopefully, that now gives you an idea of what we are trying to accomplish. See the comments and commands `bin/pfatt.sh` for details about the netgraph setup.
 
 But enough talk. Now for the fun part!
 
 # Setup
 
+First, you need to decide which method to perform EAP authentication: bridge mode or supplicant mode.
+
+Both methods effectively give you the same result, but each have their advantages and disadvantages. 
+
+**Bridge EAP-TLS**
+
+`EAP_MODE="bridge"`
+
+✅ Easiest method
+
+❌ Requires Residential Gateway to always be plugged in and on
+
+❌ Authentication can be slower and less reliable
+
+❌ The 5268AC model requires a hacky workaround
+
+**Supplicant EAP-TLS**
+
+`EAP_MODE="supplicant"`
+
+✅ Residential Gateway can be permanently off and stored
+
+✅ Fast and stable authentication
+
+❌ May be difficult for some. Requires extracting valid certificates from a Residential Gateway
+
+Pick a mode then proceed to confirming that you have your prerequisites.
+
 ## Prerequisites
 
-* At least __three__ physical network interfaces on your OPNsense server
-* The MAC address of your Residential Gateway
-* Local or console access to OPNsense
+* The MAC address of your assigned Residential Gateway
+* pfSense 2.4.x 
 
-If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](https://www.amazon.com/gp/product/B00007IFED) as your third. It has the Asix AX88772 chipset, which is supported in FreeBSD with the [axe](https://www.freebsd.org/cgi/man.cgi?query=axe&sektion=4) driver. I've confirmed it works in my setup. The driver was already loaded and I didn't have to install or configure anything to get it working. Also, don't worry about the poor performance of USB or 100Mbps NICs. This third NIC will only send/recieve a few packets periodicaly to authenticate your Router Gateway. The rest of your traffic will utilize your other (and much faster) NICs.
+For bridge mode:
+
+* __three__ physical network interfaces on your pfSense server
+
+For supplicant mode:
+
+* __two__ physical network interfaces on your pfSense server
+* The MAC address of your EAP-TLS Identity (which is the same as your residential gateway if you are using its certificates)
+* Valid certificates to perform EAP-TLS authentication (see **Extracting Certificates**)
+
+If you only have two NICs, you can buy this cheap USB 100Mbps NIC [from Amazon](https://www.amazon.com/gp/product/B00007IFED) as your third. It has the Asix AX88772 chipset, which is supported in FreeBSD with the [axe](https://www.freebsd.org/cgi/man.cgi?query=axe&sektion=4) driver. I've confirmed it works in my setup. The driver was already loaded and I didn't have to install or configure anything to get it working. 
+
+Also, don't worry about the poor performance of USB or 100Mbps NICs. This third NIC will only send/recieve a few packets periodicaly to authenticate your Router Gateway. The rest of your traffic will utilize your other (and much faster) NICs.
 
 ## Install
 
